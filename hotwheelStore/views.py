@@ -421,63 +421,13 @@ import json
 import os
 
 
-# client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# from django.shortcuts import render
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-# from groq import Groq
-# import json
-
-
-# from groq import Groq
-# import os
-
-# @csrf_exempt
-# def chatbot(request):
-
-#     if request.method == "POST":
-#         data = json.loads(request.body)
-#         user_message = data.get("message", "")
-
-#         try:
-#             # ✅ Initialize here (safe)
-#             client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-#             completion = client.chat.completions.create(
-#                 model="openai/gpt-oss-120b",
-#                 messages=[
-#                     {
-#                         "role": "system",
-#                         "content": (
-#                             "You are an expert assistant for a Hot Wheels website. "
-#                             "You ONLY answer car-related questions."
-#                         )
-#                     },
-#                     {
-#                         "role": "user",
-#                         "content": user_message
-#                     }
-#                 ],
-#                 temperature=0.7,
-#                 max_completion_tokens=512,
-#             )
-
-#             reply = completion.choices[0].message.content
-#             return JsonResponse({"response": reply})
-
-#         except Exception as e:
-#             return JsonResponse({"error": str(e)})
-
-#     return render(request, "chatbot.html")
-
-
-from groq import Groq
-import os
-import json
+from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
+from groq import Groq
+import json
 
 @csrf_exempt
 def chatbot(request):
@@ -487,17 +437,30 @@ def chatbot(request):
         user_message = data.get("message", "")
 
         try:
-            # ✅ Create client ONLY when needed
-            client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
             completion = client.chat.completions.create(
                 model="openai/gpt-oss-120b",
                 messages=[
-                    {"role": "user", "content": user_message}
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an expert assistant for a Hot Wheels website. "
+                            "You ONLY answer questions related to Hot Wheels cars, die-cast models, "
+                            "car brands, automotive topics, racing, and vehicle-related subjects. "
+                            "If a user asks anything unrelated, politely refuse and say: "
+                            "'I can only help with Hot Wheels and car-related topics.'"
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": user_message
+                    }
                 ],
+                temperature=0.7,
+                max_completion_tokens=512,
             )
 
             reply = completion.choices[0].message.content
+
             return JsonResponse({"response": reply})
 
         except Exception as e:
