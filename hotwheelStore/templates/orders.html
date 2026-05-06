@@ -1,0 +1,407 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Orders · HotWheels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#FF1A1A;--red-dim:rgba(255,26,26,0.12);
+  --white:#fff;--off-white:rgba(255,255,255,0.85);--muted:rgba(255,255,255,0.45);
+  --glass-bg:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.08);
+  --font-head:'Bebas Neue',sans-serif;--font-body:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{background:#000;color:var(--white);font-family:var(--font-body);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh;}
+#cursor-glow{position:fixed;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle at center,rgba(255,26,26,0.22) 0%,rgba(255,26,26,0.08) 35%,transparent 70%);pointer-events:none;z-index:9998;top:0;left:0;will-change:transform;transform:translate(-180px,-180px);}
+#cursor-dot{position:fixed;width:6px;height:6px;border-radius:50%;background:var(--red);pointer-events:none;z-index:9999;top:0;left:0;will-change:transform;transform:translate(-3px,-3px);transition:width .2s,height .2s,opacity .2s;box-shadow:0 0 8px var(--red);}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1;opacity:0.45;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:18px 48px;background:rgba(0,0,0,0.75);backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border);}
+.nav-logo{font-family:var(--font-head);font-size:26px;letter-spacing:4px;color:var(--red);text-decoration:none;text-shadow:0 0 20px rgba(255,26,26,0.5);}
+.nav-links{display:flex;gap:36px;list-style:none;align-items:center;}
+.nav-links a{font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;position:relative;transition:color .3s;}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.nav-links a:hover,.nav-links a.active{color:var(--white);}
+.nav-links a:hover::after,.nav-links a.active::after{transform:scaleX(1);}
+.nav-profile-wrap{position:relative;list-style:none;}
+.nav-profile-btn{display:flex;align-items:center;gap:9px;background:transparent;border:1px solid rgba(255,26,26,0.3);border-radius:40px;padding:5px 14px 5px 6px;cursor:pointer;color:var(--muted);font-family:var(--font-body);font-size:12px;font-weight:600;letter-spacing:1px;transition:border-color .3s,color .3s,background .3s;}
+.nav-profile-btn:hover,.nav-profile-btn.open{border-color:rgba(255,26,26,0.7);color:var(--white);background:rgba(255,26,26,0.06);}
+.nav-avatar{width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-family:var(--font-head);font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(255,26,26,0.5);}
+.nav-chevron{color:var(--muted);transition:transform .3s;}
+.nav-profile-btn.open .nav-chevron{transform:rotate(180deg);color:var(--red);}
+.nav-dropdown{position:absolute;top:calc(100% + 14px);right:0;width:240px;background:rgba(10,10,10,0.96);backdrop-filter:blur(24px);border:1px solid rgba(255,26,26,0.2);border-radius:4px;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(-8px);transition:opacity .25s,transform .25s;}
+.nav-dropdown::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.nav-dropdown.open{opacity:1;pointer-events:all;transform:translateY(0);}
+.nav-dropdown-header{display:flex;align-items:center;gap:12px;padding:18px 18px 14px;}
+.nav-dropdown-avatar{width:36px;height:36px;border-radius:50%;background:var(--red);color:#fff;font-family:var(--font-head);font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(255,26,26,0.4);}
+.nav-dropdown-name{font-size:12px;font-weight:600;color:var(--white);}
+.nav-dropdown-tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-top:2px;}
+.nav-dropdown-divider{height:1px;background:var(--glass-border);margin:0 0 4px;}
+.nav-dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:13px;font-weight:600;letter-spacing:1px;color:var(--muted);text-decoration:none;transition:background .2s,color .2s;}
+.nav-dropdown-item:hover{background:rgba(255,26,26,0.06);color:var(--white);}
+.nav-dropdown-logout{color:rgba(255,80,80,0.7);}
+.nav-dropdown-logout:hover{background:rgba(255,26,26,0.12);color:var(--red);}
+
+.speed-stripe{height:2px;background:linear-gradient(90deg,transparent,var(--red),#ff6b00,var(--red),transparent);background-size:200% 100%;animation:stripeMove 3s linear infinite;margin-top:70px;}
+
+/* PAGE */
+.page-header{padding:44px 48px 32px;position:relative;overflow:hidden;}
+.page-header::before{content:'ORDERS';position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-family:var(--font-head);font-size:160px;color:rgba(255,26,26,0.03);pointer-events:none;user-select:none;line-height:1;}
+.breadcrumb{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.breadcrumb a{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s;}
+.breadcrumb a:hover{color:var(--red);}
+.breadcrumb-sep{color:rgba(255,26,26,0.4);}
+.breadcrumb-current{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--red);}
+.page-header-inner{display:flex;align-items:flex-end;justify-content:space-between;}
+.page-eyebrow{font-size:11px;letter-spacing:6px;text-transform:uppercase;color:var(--red);margin-bottom:8px;}
+.page-title{font-family:var(--font-head);font-size:clamp(44px,6vw,72px);letter-spacing:4px;line-height:0.95;}
+.page-title span{color:var(--red);filter:drop-shadow(0 0 20px rgba(255,26,26,0.5));}
+.order-total-count{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.order-total-count strong{color:var(--red);font-family:var(--font-head);font-size:20px;vertical-align:middle;}
+
+/* MAIN */
+.orders-main{padding:0 48px 80px;}
+
+/* STATUS FILTER */
+.status-filter{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;}
+.status-chip{padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border:1px solid var(--glass-border);border-radius:2px;background:transparent;cursor:pointer;transition:all .25s;font-family:var(--font-body);}
+.status-chip:hover,.status-chip.active{color:var(--white);border-color:rgba(255,26,26,0.4);background:rgba(255,26,26,0.08);}
+
+/* ORDER CARD */
+.order-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:4px;overflow:hidden;position:relative;margin-bottom:16px;transition:border-color .3s;}
+.order-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);transform:scaleX(0);transition:transform .4s;}
+.order-card:hover{border-color:rgba(255,26,26,0.2);}
+.order-card:hover::before{transform:scaleX(1);}
+
+/* Order header */
+.order-head{padding:18px 24px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.order-meta{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.order-id{font-family:var(--font-head);font-size:18px;letter-spacing:2px;color:var(--red);}
+.order-date{font-size:11px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+.order-head-right{display:flex;align-items:center;gap:12px;}
+.order-total{font-family:var(--font-head);font-size:22px;letter-spacing:1px;}
+
+/* Status badge */
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:2px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;}
+.status-badge.pending{background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.25);color:#FF8C00;}
+.status-badge.confirmed{background:rgba(0,150,255,0.08);border:1px solid rgba(0,150,255,0.2);color:#0096FF;}
+.status-badge.shipped{background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);color:#a78bfa;}
+.status-badge.delivered{background:rgba(0,200,100,0.08);border:1px solid rgba(0,200,100,0.2);color:#00C864;}
+.status-badge.cancelled{background:rgba(255,26,26,0.08);border:1px solid rgba(255,26,26,0.2);color:var(--red);}
+.status-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* Order body: product info */
+.order-body{padding:18px 24px;}
+.order-product-row{display:flex;align-items:center;gap:16px;}
+.order-product-img{width:72px;height:60px;border-radius:3px;object-fit:cover;border:1px solid var(--glass-border);background:rgba(255,26,26,0.06);flex-shrink:0;}
+.order-product-img-ph{width:72px;height:60px;border-radius:3px;border:1px solid var(--glass-border);background:rgba(255,26,26,0.06);display:flex;align-items:center;justify-content:center;color:rgba(255,26,26,0.2);flex-shrink:0;}
+.order-product-info{flex:1;}
+.order-product-name{font-weight:700;font-size:15px;letter-spacing:0.3px;margin-bottom:3px;}
+.order-product-cat{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.order-product-meta{display:flex;align-items:center;gap:16px;}
+.order-product-qty{font-size:12px;color:var(--muted);letter-spacing:1px;}
+.order-product-price{font-family:var(--font-head);font-size:18px;color:var(--red);}
+
+/* Timeline */
+.order-timeline{padding:0 24px 20px;margin-top:4px;}
+.timeline{display:flex;align-items:flex-start;gap:0;position:relative;}
+.timeline-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.timeline-step::before{content:'';position:absolute;top:10px;left:50%;right:-50%;height:1px;background:var(--glass-border);z-index:0;}
+.timeline-step:last-child::before{display:none;}
+.tl-dot{width:20px;height:20px;border-radius:50%;border:1px solid var(--glass-border);background:#000;display:flex;align-items:center;justify-content:center;z-index:1;flex-shrink:0;transition:all .3s;}
+.tl-dot.done{background:rgba(0,200,100,0.15);border-color:rgba(0,200,100,0.4);}
+.tl-dot.done svg{color:#00C864;}
+.tl-dot.current{background:rgba(255,26,26,0.15);border-color:rgba(255,26,26,0.4);}
+.tl-dot.current svg{color:var(--red);}
+.tl-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:6px;text-align:center;}
+.tl-dot.done~.tl-label,.tl-dot.current~.tl-label{color:var(--off-white);}
+.tl-step-wrap{display:flex;flex-direction:column;align-items:center;}
+
+/* Order footer actions */
+.order-foot{padding:14px 24px;border-top:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.order-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.order-action-btn{padding:8px 16px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;border-radius:2px;cursor:pointer;font-family:var(--font-body);text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-reorder{background:var(--red-dim);border:1px solid rgba(255,26,26,0.3);color:var(--red);}
+.btn-reorder:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-track{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--muted);}
+.btn-track:hover{color:var(--white);border-color:rgba(255,255,255,0.2);}
+.btn-invoice{background:transparent;border:none;color:var(--muted);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;font-family:var(--font-body);font-weight:600;}
+.btn-invoice:hover{color:var(--white);}
+
+/* Empty state */
+.orders-empty{text-align:center;padding:80px 20px;}
+.orders-empty-icon{width:72px;height:72px;border-radius:50%;background:var(--red-dim);border:1px solid rgba(255,26,26,0.2);display:flex;align-items:center;justify-content:center;color:var(--red);margin:0 auto 24px;}
+.orders-empty-title{font-family:var(--font-head);font-size:32px;letter-spacing:4px;margin-bottom:10px;}
+.orders-empty-sub{font-size:13px;color:var(--muted);letter-spacing:1px;margin-bottom:28px;}
+.shop-now-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 32px;background:transparent;border:1px solid rgba(255,26,26,0.5);border-radius:2px;color:var(--white);font-family:var(--font-body);font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;text-decoration:none;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;}
+.shop-now-btn::before{content:'';position:absolute;inset:0;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .4s;}
+.shop-now-btn:hover::before{transform:scaleX(1);}
+.shop-now-btn:hover{box-shadow:0 0 30px rgba(255,26,26,0.4);border-color:var(--red);}
+.shop-now-btn span,.shop-now-btn svg{position:relative;z-index:1;}
+
+footer{border-top:1px solid var(--glass-border);padding:40px 48px;display:flex;justify-content:space-between;align-items:center;}
+.footer-logo{font-family:var(--font-head);font-size:22px;letter-spacing:4px;color:var(--red);}
+.footer-copy{font-size:12px;letter-spacing:2px;color:var(--muted);}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+@keyframes stripeMove{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<div id="cursor-glow"></div>
+<div id="cursor-dot"></div>
+
+<nav>
+  <a href="/" class="nav-logo">HOTWHEELS</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/shop/">Shop</a></li>
+    <li><a href="/orders/" class="active">My Orders</a></li>
+    {% if request.session.email %}
+    <li class="nav-profile-wrap">
+      <button class="nav-profile-btn" id="profileBtn">
+        <span class="nav-avatar">{{ request.session.email|first|upper }}</span>
+        <span>{{ request.session.email }}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" class="nav-chevron"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="nav-dropdown" id="profileDropdown">
+        <div class="nav-dropdown-header">
+          <span class="nav-dropdown-avatar">{{ request.session.email|first|upper }}</span>
+          <div><div class="nav-dropdown-name">{{ request.session.email }}</div><div class="nav-dropdown-tag">Member</div></div>
+        </div>
+        <div class="nav-dropdown-divider"></div>
+        <a href="/profile/" class="nav-dropdown-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My Profile</a>
+        <a href="/cart/" class="nav-dropdown-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Cart</a>
+        <div class="nav-dropdown-divider"></div>
+        <a href="/logout/" class="nav-dropdown-item nav-dropdown-logout"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
+      </div>
+    </li>
+    {% else %}
+    <li><a href="/login/">Login</a></li>
+    {% endif %}
+  </ul>
+</nav>
+
+<div class="speed-stripe"></div>
+
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="/profile/">Profile</a><span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Orders</span>
+  </div>
+  <div class="page-header-inner">
+    <div>
+      <p class="page-eyebrow">Account · History</p>
+      <h1 class="page-title">MY <span>ORDERS</span></h1>
+    </div>
+    <div class="order-total-count"><strong>{{ orders|length }}</strong> Orders</div>
+  </div>
+</div>
+
+<div class="orders-main">
+
+  <!-- Status filter -->
+  <div class="status-filter reveal">
+    <button class="status-chip active" data-status="all" onclick="filterStatus(this,'all')">All</button>
+    <button class="status-chip" data-status="Pending" onclick="filterStatus(this,'Pending')">Pending</button>
+    <button class="status-chip" data-status="Confirmed" onclick="filterStatus(this,'Confirmed')">Confirmed</button>
+    <button class="status-chip" data-status="Shipped" onclick="filterStatus(this,'Shipped')">Shipped</button>
+    <button class="status-chip" data-status="Delivered" onclick="filterStatus(this,'Delivered')">Delivered</button>
+    <button class="status-chip" data-status="Cancelled" onclick="filterStatus(this,'Cancelled')">Cancelled</button>
+  </div>
+  {% if orders %}
+  {% for order in orders %}
+  <div class="order-card reveal" data-status="{{ order.status }}">
+
+    <!-- HEAD -->
+    <div class="order-head">
+      <div class="order-meta">
+        <div class="order-id">#HW-{{ order.id|stringformat:"05d" }}</div>
+        <div class="order-date">{{ order.created_at|date:"d M Y, h:i A" }}</div>
+      </div>
+      <div class="order-head-right">
+        <div class="order-total">₹{{ order.total_price }}</div>
+        <div class="status-badge {{ order.status|lower }}">
+          <span class="status-dot"></span>
+          {{ order.status }}
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT -->
+    <div class="order-body">
+      <div class="order-product-row">
+        {% if order.product.image %}
+        <img src="{{ order.product.image.url }}" alt="{{ order.product.name }}" class="order-product-img"
+             onerror="this.outerHTML='<div class=order-product-img-ph><svg width=22 height=22 viewBox=\\'0 0 24 24\\' fill=\\'currentColor\\'><path d=\\'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z\\'/></svg></div>'">
+        {% else %}
+        <div class="order-product-img-ph">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg>
+        </div>
+        {% endif %}
+        <div class="order-product-info">
+          <div class="order-product-name">{{ order.product.name }}</div>
+          <div class="order-product-cat">{{ order.product.category }} · 1:64 Scale</div>
+          <div class="order-product-meta">
+            <span class="order-product-qty">Qty: {{ order.quantity }}</span>
+            <span class="order-product-price">₹{{ order.product.price }} each</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="order-timeline">
+      {% with s=order.status %}
+      <div class="timeline">
+        <!-- Ordered -->
+        <div class="timeline-step">
+          <div class="tl-step-wrap">
+            <div class="tl-dot done">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="tl-label">Ordered</div>
+          </div>
+        </div>
+        <!-- Confirmed -->
+        <div class="timeline-step">
+          <div class="tl-step-wrap">
+            <div class="tl-dot {% if s == 'Confirmed' %}current{% elif s == 'Shipped' or s == 'Delivered' %}done{% endif %}">
+              {% if s == 'Shipped' or s == 'Delivered' %}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              {% elif s == 'Confirmed' %}
+              <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor"/></svg>
+              {% endif %}
+            </div>
+            <div class="tl-label">Confirmed</div>
+          </div>
+        </div>
+        <!-- Shipped -->
+        <div class="timeline-step">
+          <div class="tl-step-wrap">
+            <div class="tl-dot {% if s == 'Shipped' %}current{% elif s == 'Delivered' %}done{% endif %}">
+              {% if s == 'Delivered' %}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              {% elif s == 'Shipped' %}
+              <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor"/></svg>
+              {% endif %}
+            </div>
+            <div class="tl-label">Shipped</div>
+          </div>
+        </div>
+        <!-- Delivered -->
+        <div class="timeline-step">
+          <div class="tl-step-wrap">
+            <div class="tl-dot {% if s == 'Delivered' %}done{% endif %}">
+              {% if s == 'Delivered' %}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              {% endif %}
+            </div>
+            <div class="tl-label">Delivered</div>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- FOOTER ACTIONS -->
+    <div class="order-foot">
+      <div class="order-actions">
+        {% if order.status == 'Delivered' %}
+        <a href="/shop/" class="order-action-btn btn-reorder">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          Reorder
+        </a>
+        {% endif %}
+        {% if order.status == 'Pending' or order.status == 'Confirmed' %}
+        <button class="order-action-btn btn-track">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Track Order
+        </button>
+        {% endif %}
+        {% if order.status == 'Shipped' %}
+        <button class="order-action-btn btn-track">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          Track Shipment
+        </button>
+        {% endif %}
+      </div>
+      <button class="btn-invoice" onclick="downloadInvoice({{ order.id }})">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="vertical-align:middle;margin-right:4px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Invoice
+      </button>
+    </div>
+
+  </div>
+  {% endfor %}
+  {% else %}
+  <!-- EMPTY -->
+  <div class="orders-empty reveal">
+    <div class="orders-empty-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="11" y2="16"/></svg>
+    </div>
+    <div class="orders-empty-title">No Orders Yet</div>
+    <div class="orders-empty-sub">You haven't placed any orders. Start your collection today.</div>
+    <a href="/shop/" class="shop-now-btn">
+      <span>Browse Collection</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+<footer>
+  <span class="footer-logo">HOTWHEELS</span>
+  <span class="footer-copy">© 2026 HotWheels · All Rights Reserved</span>
+</footer>
+
+<script>
+(function(){
+  const glow=document.getElementById('cursor-glow'),dot=document.getElementById('cursor-dot');
+  let mx=-300,my=-300,gx=-300,gy=-300;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.transform=`translate(${mx-3}px,${my-3}px)`;},{passive:true});
+  function tick(){gx+=(mx-gx)*0.1;gy+=(my-gy)*0.1;glow.style.transform=`translate(${gx-180}px,${gy-180}px)`;requestAnimationFrame(tick);}tick();
+  document.querySelectorAll('a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{dot.style.width=dot.style.height='14px';dot.style.opacity='0.6';});
+    el.addEventListener('mouseleave',()=>{dot.style.width=dot.style.height='6px';dot.style.opacity='1';});
+  });
+})();
+
+(function(){
+  const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');obs.unobserve(x.target);}});},{threshold:0.06});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+})();
+
+function filterStatus(btn,status){
+  document.querySelectorAll('.status-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.order-card').forEach(card=>{
+    const s=card.dataset.status;
+    card.style.display=(status==='all'||s===status)?'':'none';
+  });
+}
+
+function downloadInvoice(orderId){
+  // In production hook to a real PDF endpoint
+  alert('Invoice for order #HW-'+String(orderId).padStart(5,'0')+' will be emailed to you.');
+}
+
+(function(){
+  const btn=document.getElementById('profileBtn'),dd=document.getElementById('profileDropdown');
+  if(!btn||!dd)return;
+  btn.addEventListener('click',e=>{e.stopPropagation();btn.classList.toggle('open');dd.classList.toggle('open');});
+  document.addEventListener('click',()=>{btn.classList.remove('open');dd.classList.remove('open');});
+  dd.addEventListener('click',e=>e.stopPropagation());
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){btn.classList.remove('open');dd.classList.remove('open');}});
+})();
+</script>
+</body>
+</html>

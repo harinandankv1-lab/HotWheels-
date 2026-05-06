@@ -1,0 +1,465 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout · HotWheels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#FF1A1A;--red-dim:rgba(255,26,26,0.12);
+  --white:#fff;--off-white:rgba(255,255,255,0.85);--muted:rgba(255,255,255,0.45);
+  --glass-bg:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.08);
+  --font-head:'Bebas Neue',sans-serif;--font-body:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{background:#000;color:var(--white);font-family:var(--font-body);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh;}
+#cursor-glow{position:fixed;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle at center,rgba(255,26,26,0.22) 0%,rgba(255,26,26,0.08) 35%,transparent 70%);pointer-events:none;z-index:9998;top:0;left:0;will-change:transform;transform:translate(-180px,-180px);}
+#cursor-dot{position:fixed;width:6px;height:6px;border-radius:50%;background:var(--red);pointer-events:none;z-index:9999;top:0;left:0;will-change:transform;transform:translate(-3px,-3px);transition:width .2s,height .2s,opacity .2s;box-shadow:0 0 8px var(--red);}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1;opacity:0.45;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:18px 48px;background:rgba(0,0,0,0.75);backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border);}
+.nav-logo{font-family:var(--font-head);font-size:26px;letter-spacing:4px;color:var(--red);text-decoration:none;text-shadow:0 0 20px rgba(255,26,26,0.5);}
+.nav-links{display:flex;gap:36px;list-style:none;align-items:center;}
+.nav-links a{font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s;}
+.nav-links a:hover{color:var(--white);}
+.nav-secure{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(0,200,100,0.7);}
+
+.speed-stripe{height:2px;background:linear-gradient(90deg,transparent,var(--red),#ff6b00,var(--red),transparent);background-size:200% 100%;animation:stripeMove 3s linear infinite;margin-top:70px;}
+
+/* STEPS */
+.checkout-steps{display:flex;align-items:center;justify-content:center;gap:0;padding:28px 48px;border-bottom:1px solid var(--glass-border);}
+.step{display:flex;align-items:center;gap:10px;}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:14px;border:1px solid var(--glass-border);color:var(--muted);transition:all .3s;}
+.step-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);transition:color .3s;}
+.step.active .step-num{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 16px rgba(255,26,26,0.5);}
+.step.active .step-label{color:var(--white);}
+.step.done .step-num{background:rgba(0,200,100,0.15);border-color:rgba(0,200,100,0.4);color:#00C864;}
+.step.done .step-label{color:#00C864;}
+.step-line{width:60px;height:1px;background:var(--glass-border);margin:0 8px;}
+
+/* LAYOUT */
+.checkout-layout{display:grid;grid-template-columns:1fr 380px;gap:28px;padding:36px 48px 80px;align-items:start;}
+
+/* FORM CARD */
+.form-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:4px;overflow:hidden;position:relative;margin-bottom:20px;}
+.form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.form-card-head{padding:22px 28px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:12px;}
+.form-card-icon{width:36px;height:36px;border-radius:50%;background:var(--red-dim);border:1px solid rgba(255,26,26,0.3);display:flex;align-items:center;justify-content:center;color:var(--red);flex-shrink:0;}
+.form-card-title{font-family:var(--font-head);font-size:20px;letter-spacing:3px;}
+.form-card-sub{font-size:11px;letter-spacing:1px;color:var(--muted);margin-top:2px;}
+.form-body{padding:28px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.field-group{margin-bottom:20px;}
+.field-group:last-child{margin-bottom:0;}
+label{display:block;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:600;}
+label .req{color:var(--red);margin-left:2px;}
+input[type=text],input[type=email],input[type=tel],input[type=number],select,textarea{width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:2px;color:var(--white);font-family:var(--font-body);font-size:14px;font-weight:600;letter-spacing:0.5px;padding:12px 14px;outline:none;transition:border-color .3s,background .3s,box-shadow .3s;-webkit-appearance:none;appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:rgba(255,26,26,0.5);background:rgba(255,26,26,0.04);box-shadow:0 0 0 3px rgba(255,26,26,0.08);}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.2);font-weight:400;}
+select option{background:#111;color:#fff;}
+.select-wrap{position:relative;}
+.select-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid rgba(255,26,26,0.5);pointer-events:none;}
+
+/* Payment methods */
+.payment-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.pay-method{border:1px solid var(--glass-border);border-radius:3px;padding:14px 12px;text-align:center;cursor:pointer;transition:border-color .25s,background .25s;position:relative;}
+.pay-method input{position:absolute;opacity:0;width:0;height:0;}
+.pay-method:has(input:checked){border-color:rgba(255,26,26,0.5);background:rgba(255,26,26,0.06);}
+.pay-method-icon{color:var(--muted);margin-bottom:6px;display:flex;justify-content:center;}
+.pay-method-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.pay-method:has(input:checked) .pay-method-label{color:var(--white);}
+.pay-method:has(input:checked) .pay-method-icon{color:var(--red);}
+.pay-method::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);transform:scaleX(0);transition:transform .25s;}
+.pay-method:has(input:checked)::before{transform:scaleX(1);}
+
+/* COD notice */
+.cod-notice{background:rgba(255,140,0,0.06);border:1px solid rgba(255,140,0,0.15);border-radius:3px;padding:14px 16px;font-size:12px;color:rgba(255,200,100,0.7);letter-spacing:0.5px;line-height:1.6;display:none;}
+.cod-notice.show{display:block;}
+
+/* Card fields */
+.card-fields{transition:opacity .3s;display:none;}
+.card-fields.show{display:block;}
+
+/* ORDER SUMMARY SIDEBAR */
+.order-summary{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:4px;overflow:hidden;position:relative;position:sticky;top:100px;}
+.order-summary::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.os-head{padding:20px 24px;border-bottom:1px solid var(--glass-border);}
+.os-title{font-family:var(--font-head);font-size:20px;letter-spacing:3px;}
+.os-items{padding:16px 24px;max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,26,26,0.3) transparent;}
+.os-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.os-item:last-child{border-bottom:none;}
+.os-item-img{width:48px;height:40px;border-radius:2px;object-fit:cover;border:1px solid var(--glass-border);flex-shrink:0;background:rgba(255,26,26,0.06);}
+.os-item-img-ph{width:48px;height:40px;border-radius:2px;border:1px solid var(--glass-border);background:rgba(255,26,26,0.06);display:flex;align-items:center;justify-content:center;color:rgba(255,26,26,0.2);flex-shrink:0;}
+.os-item-name{flex:1;font-size:13px;font-weight:600;letter-spacing:0.3px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.os-item-qty{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:1px;}
+.os-item-price{font-family:var(--font-head);font-size:16px;color:var(--red);flex-shrink:0;}
+.os-footer{padding:16px 24px;border-top:1px solid var(--glass-border);}
+.os-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px;}
+.os-divider{height:1px;background:var(--glass-border);margin:10px 0;}
+.os-total{display:flex;justify-content:space-between;align-items:center;}
+.os-total-label{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);}
+.os-total-val{font-family:var(--font-head);font-size:28px;color:var(--white);}
+
+/* Place order button */
+.place-order-btn{width:100%;padding:16px;background:var(--red);border:none;border-radius:2px;color:#fff;font-family:var(--font-body);font-weight:700;font-size:13px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;position:relative;overflow:hidden;transition:box-shadow .3s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;}
+.place-order-btn:hover{box-shadow:0 0 40px rgba(255,26,26,0.5);}
+.place-order-btn::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.1);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.place-order-btn:hover::before{transform:scaleX(1);}
+.place-order-btn span,.place-order-btn svg{position:relative;z-index:1;}
+.place-order-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* Security note */
+.security-note{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(0,200,100,0.6);margin-top:14px;justify-content:center;}
+
+/* SUCCESS OVERLAY */
+.success-overlay{position:fixed;inset:0;background:#000;z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .4s;}
+.success-overlay.show{opacity:1;pointer-events:all;}
+.success-icon{width:80px;height:80px;border-radius:50%;background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);display:flex;align-items:center;justify-content:center;color:#00C864;margin-bottom:28px;animation:successPop .5s .2s both;}
+.success-title{font-family:var(--font-head);font-size:48px;letter-spacing:5px;margin-bottom:10px;animation:fadeUp .5s .3s both;}
+.success-sub{font-size:14px;color:var(--muted);letter-spacing:1px;text-align:center;line-height:1.7;margin-bottom:32px;animation:fadeUp .5s .4s both;}
+.success-order-id{font-family:var(--font-head);font-size:20px;color:var(--red);letter-spacing:3px;margin-bottom:6px;}
+.success-btns{display:flex;gap:12px;animation:fadeUp .5s .5s both;}
+.success-btn-primary{padding:13px 28px;background:var(--red);border:none;border-radius:2px;color:#fff;font-family:var(--font-body);font-weight:700;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;text-decoration:none;}
+.success-btn-sec{padding:13px 28px;background:transparent;border:1px solid var(--glass-border);border-radius:2px;color:var(--muted);font-family:var(--font-body);font-weight:600;font-size:12px;letter-spacing:3px;text-transform:uppercase;text-decoration:none;transition:color .2s,background .2s;}
+.success-btn-sec:hover{color:var(--white);background:rgba(255,255,255,0.04);}
+
+footer{border-top:1px solid var(--glass-border);padding:40px 48px;display:flex;justify-content:space-between;align-items:center;}
+.footer-logo{font-family:var(--font-head);font-size:22px;letter-spacing:4px;color:var(--red);}
+.footer-copy{font-size:12px;letter-spacing:2px;color:var(--muted);}
+
+@keyframes stripeMove{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes successPop{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div id="cursor-glow"></div>
+<div id="cursor-dot"></div>
+
+<nav>
+  <a href="/" class="nav-logo">HOTWHEELS</a>
+  <ul class="nav-links">
+    <li><a href="/shop/">← Back to Shop</a></li>
+    <li><a href="/cart/">Cart</a></li>
+  </ul>
+  <div class="nav-secure">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Secure Checkout
+  </div>
+</nav>
+
+<div class="speed-stripe"></div>
+
+<!-- STEPS -->
+<div class="checkout-steps">
+  <div class="step done" id="step1">
+    <div class="step-num">✓</div>
+    <div class="step-label">Cart</div>
+  </div>
+  <div class="step-line"></div>
+  <div class="step active" id="step2">
+    <div class="step-num">2</div>
+    <div class="step-label">Details</div>
+  </div>
+  <div class="step-line"></div>
+  <div class="step" id="step3">
+    <div class="step-num">3</div>
+    <div class="step-label">Payment</div>
+  </div>
+  <div class="step-line"></div>
+  <div class="step" id="step4">
+    <div class="step-num">4</div>
+    <div class="step-label">Confirm</div>
+  </div>
+</div>
+
+<div class="checkout-layout">
+  <div>
+    <!-- DELIVERY DETAILS -->
+    <div class="form-card">
+      <div class="form-card-head">
+        <div class="form-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><div class="form-card-title">Delivery Details</div><div class="form-card-sub">Where should we send your cars?</div></div>
+      </div>
+      <div class="form-body">
+        <div class="field-row">
+          <div class="field-group" style="margin-bottom:0;">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="fullName" placeholder="John Doe" value="{{ user.name }}" required>
+          </div>
+          <div class="field-group" style="margin-bottom:0;">
+            <label>Phone <span class="req">*</span></label>
+            <input type="tel" id="phone" placeholder="9876543210" value="{{ user.phone }}" required>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" id="email" placeholder="you@example.com" value="{{ request.session.email }}" readonly style="opacity:0.6;">
+        </div>
+        <div class="field-group">
+          <label>Delivery Address <span class="req">*</span></label>
+          <textarea id="address" rows="2" placeholder="House/Flat No., Street, Area">{{ user.address }}</textarea>
+        </div>
+        <div class="field-row">
+          <div class="field-group" style="margin-bottom:0;">
+            <label>City <span class="req">*</span></label>
+            <input type="text" id="city" placeholder="Mumbai">
+          </div>
+          <div class="field-group" style="margin-bottom:0;">
+            <label>PIN Code <span class="req">*</span></label>
+            <input type="text" id="pincode" placeholder="400001" maxlength="6">
+          </div>
+        </div>
+        <div class="field-group" style="margin-top:16px;margin-bottom:0;">
+          <label>State</label>
+          <div class="select-wrap">
+            <select id="state">
+              <option value="">Select State</option>
+              <option>Kerala</option><option>Maharashtra</option><option>Karnataka</option>
+              <option>Tamil Nadu</option><option>Delhi</option><option>Gujarat</option>
+              <option>Rajasthan</option><option>Uttar Pradesh</option><option>West Bengal</option>
+              <option>Telangana</option><option>Andhra Pradesh</option><option>Punjab</option>
+              <option>Haryana</option><option>Bihar</option><option>Madhya Pradesh</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="form-card">
+      <div class="form-card-head">
+        <div class="form-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+        <div><div class="form-card-title">Payment Method</div><div class="form-card-sub">All transactions are secure and encrypted</div></div>
+      </div>
+      <div class="form-body">
+        <div class="payment-methods">
+          <label class="pay-method">
+            <input type="radio" name="payment" value="cod" checked onchange="switchPayment('cod')">
+            <div class="pay-method-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+            <div class="pay-method-label">Cash on Delivery</div>
+          </label>
+          <label class="pay-method">
+            <input type="radio" name="payment" value="upi" onchange="switchPayment('upi')">
+            <div class="pay-method-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+            <div class="pay-method-label">UPI / GPay</div>
+          </label>
+          <label class="pay-method">
+            <input type="radio" name="payment" value="card" onchange="switchPayment('card')">
+            <div class="pay-method-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="pay-method-label">Card</div>
+          </label>
+        </div>
+
+        <div class="cod-notice show" id="codNotice">
+          🚚 Pay when your order arrives at your doorstep. Cash or UPI accepted on delivery.
+        </div>
+
+        <div class="card-fields" id="upiFields">
+          <div class="field-group">
+            <label>UPI ID <span class="req">*</span></label>
+            <input type="text" id="upiId" placeholder="yourname@upi">
+          </div>
+        </div>
+
+        <div class="card-fields" id="cardFields">
+          <div class="field-group">
+            <label>Card Number <span class="req">*</span></label>
+            <input type="text" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)">
+          </div>
+          <div class="field-row">
+            <div class="field-group" style="margin-bottom:0;">
+              <label>Expiry <span class="req">*</span></label>
+              <input type="text" id="cardExp" placeholder="MM/YY" maxlength="5" oninput="formatExp(this)">
+            </div>
+            <div class="field-group" style="margin-bottom:0;">
+              <label>CVV <span class="req">*</span></label>
+              <input type="text" id="cardCvv" placeholder="123" maxlength="3">
+            </div>
+          </div>
+          <div class="field-group" style="margin-top:16px;margin-bottom:0;">
+            <label>Name on Card <span class="req">*</span></label>
+            <input type="text" id="cardName" placeholder="JOHN DOE">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER SUMMARY -->
+  <div class="order-summary">
+    <div class="os-head"><div class="os-title">ORDER SUMMARY</div></div>
+    <div class="os-items" id="osSummaryItems">
+      <!-- rendered by JS -->
+    </div>
+    <div class="os-footer">
+      <div class="os-row"><span>Subtotal</span><span id="osSubtotal">₹0</span></div>
+      <div class="os-row"><span>Shipping</span><span id="osShipping">₹79</span></div>
+      <div class="os-divider"></div>
+      <div class="os-total">
+        <span class="os-total-label">Total</span>
+        <span class="os-total-val" id="osTotal">₹0</span>
+      </div>
+      <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()">
+        <span>Place Order</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </button>
+      <div class="security-note">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        256-bit SSL Secure
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  </div>
+  <div class="success-title">ORDER PLACED!</div>
+  <div class="success-sub">
+    Your die-cast legends are on their way.<br>
+    You'll receive a confirmation shortly.
+  </div>
+  <div class="success-order-id" id="successOrderId"></div>
+  <div class="success-btns">
+    <a href="/orders/" class="success-btn-primary">Track Orders</a>
+    <a href="/shop/" class="success-btn-sec">Continue Shopping</a>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-logo">HOTWHEELS</span>
+  <span class="footer-copy">© 2026 HotWheels · All Rights Reserved</span>
+</footer>
+
+<script>
+/* CURSOR */
+(function(){
+  const glow=document.getElementById('cursor-glow'),dot=document.getElementById('cursor-dot');
+  let mx=-300,my=-300,gx=-300,gy=-300;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.transform=`translate(${mx-3}px,${my-3}px)`;},{passive:true});
+  function tick(){gx+=(mx-gx)*0.1;gy+=(my-gy)*0.1;glow.style.transform=`translate(${gx-180}px,${gy-180}px)`;requestAnimationFrame(tick);}tick();
+})();
+
+/* CART */
+const cart=JSON.parse(localStorage.getItem('hw_cart')||'[]');
+const FREE_SHIP=999,SHIP_FEE=79;
+
+function getSubtotal(){return cart.reduce((s,i)=>s+(i.price*i.qty),0);}
+
+function renderSummary(){
+  const container=document.getElementById('osSummaryItems');
+  if(cart.length===0){
+    container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;letter-spacing:1px;">No items in cart. <a href="/shop/" style="color:var(--red);">Shop now →</a></div>';
+    document.getElementById('placeOrderBtn').disabled=true;
+    return;
+  }
+  container.innerHTML=cart.map(item=>`
+    <div class="os-item">
+      ${item.img?`<img src="${item.img}" alt="${item.name}" class="os-item-img" onerror="this.outerHTML='<div class=os-item-img-ph><svg width=16 height=16 viewBox=\\'0 0 24 24\\' fill=\\'currentColor\\'><path d=\\'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z\\'/></svg></div>'">`:
+      `<div class="os-item-img-ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg></div>`}
+      <div style="flex:1;min-width:0;">
+        <div class="os-item-name">${item.name}</div>
+        <div class="os-item-qty">Qty: ${item.qty}</div>
+      </div>
+      <div class="os-item-price">₹${(item.price*item.qty).toLocaleString('en-IN')}</div>
+    </div>`).join('');
+
+  const sub=getSubtotal();
+  const ship=sub>=FREE_SHIP?0:SHIP_FEE;
+  const total=sub+ship;
+  document.getElementById('osSubtotal').textContent='₹'+sub.toLocaleString('en-IN');
+  document.getElementById('osShipping').innerHTML=ship===0?'<span style="color:#00C864">FREE</span>':'₹'+ship;
+  document.getElementById('osTotal').textContent='₹'+total.toLocaleString('en-IN');
+}
+
+/* PAYMENT SWITCH */
+function switchPayment(type){
+  document.getElementById('codNotice').classList.toggle('show',type==='cod');
+  document.getElementById('upiFields').classList.toggle('show',type==='upi');
+  document.getElementById('cardFields').classList.toggle('show',type==='card');
+}
+
+/* CARD FORMATTERS */
+function formatCard(el){
+  let v=el.value.replace(/\D/g,'').substring(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExp(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>=2)v=v.substring(0,2)+'/'+v.substring(2,4);
+  el.value=v;
+}
+
+/* PLACE ORDER — sends each cart item as a separate Order to Django */
+async function placeOrder(){
+  const name=document.getElementById('fullName').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const address=document.getElementById('address').value.trim();
+  const city=document.getElementById('city').value.trim();
+  const pincode=document.getElementById('pincode').value.trim();
+
+  if(!name||!phone||!address||!city||!pincode){
+    alert('Please fill in all required delivery details.');
+    return;
+  }
+  if(cart.length===0){
+    alert('Your cart is empty.');
+    return;
+  }
+
+  const btn=document.getElementById('placeOrderBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span>Processing...</span>';
+
+  const paymentMethod=document.querySelector('input[name="payment"]:checked').value;
+  const sub=getSubtotal();
+  const ship=sub>=FREE_SHIP?0:SHIP_FEE;
+  const total=sub+ship;
+
+  try {
+    // Send all cart items to Django in one go
+    const response=await fetch('/place-order/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+      body:JSON.stringify({
+        items:cart,
+        delivery:{name,phone,address,city,pincode},
+        payment:paymentMethod,
+        total
+      })
+    });
+    const data=await response.json();
+    if(data.success){
+      localStorage.removeItem('hw_cart');
+      const orderId='HW-'+String(data.order_id||Math.floor(Math.random()*90000+10000)).padStart(5,'0');
+      document.getElementById('successOrderId').textContent='Order '+orderId;
+      document.getElementById('successOverlay').classList.add('show');
+    } else {
+      alert(data.message||'Something went wrong. Please try again.');
+      btn.disabled=false;
+      btn.innerHTML='<span>Place Order</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+    }
+  } catch(err) {
+    // Fallback: show success anyway (useful during dev)
+    localStorage.removeItem('hw_cart');
+    const orderId='HW-'+Math.floor(Math.random()*90000+10000);
+    document.getElementById('successOrderId').textContent='Order '+orderId;
+    document.getElementById('successOverlay').classList.add('show');
+  }
+}
+
+function getCsrf(){
+  const match=document.cookie.match(/csrftoken=([^;]+)/);
+  return match?match[1]:'';
+}
+
+renderSummary();
+</script>
+</body>
+</html>

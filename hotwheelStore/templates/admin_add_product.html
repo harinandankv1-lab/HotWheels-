@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Product · Admin · HotWheels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #FF1A1A; --red-glow: rgba(255,26,26,0.4);
+  --red-dim: rgba(255,26,26,0.12);
+  --white: #ffffff; --off-white: rgba(255,255,255,0.85);
+  --muted: rgba(255,255,255,0.45);
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+body { background:#000; color:var(--white); font-family:var(--font-body); min-height:100vh; }
+#cursor-glow {
+  position:fixed; width:360px; height:360px; border-radius:50%;
+  background:radial-gradient(circle at center,rgba(255,26,26,0.18) 0%,rgba(255,26,26,0.06) 35%,transparent 70%);
+  pointer-events:none; z-index:9998; top:0; left:0;
+  will-change:transform; transform:translate(-180px,-180px);
+}
+nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px; height:64px;
+  background:rgba(0,0,0,0.8); border-bottom:1px solid var(--glass-border);
+  position:sticky; top:0; z-index:100; backdrop-filter:blur(12px);
+}
+.nav-logo { font-family:var(--font-head); font-size:28px; letter-spacing:3px; }
+.nav-logo span { color:var(--red); }
+.nav-back {
+  font-family:var(--font-body); font-size:13px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); text-decoration:none;
+  border:1px solid var(--glass-border); padding:7px 16px; border-radius:2px;
+  transition:all 0.2s;
+}
+.nav-back:hover { color:var(--white); border-color:rgba(255,255,255,0.2); }
+.container { max-width:700px; margin:0 auto; padding:48px 24px; }
+.page-title { font-family:var(--font-head); font-size:48px; letter-spacing:2px; margin-bottom:6px; }
+.page-sub { color:var(--muted); font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:36px; }
+.card {
+  background:var(--glass-bg); border:1px solid var(--glass-border);
+  border-radius:2px; padding:40px; position:relative;
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+}
+.field { margin-bottom:22px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+label {
+  display:block; font-size:11px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); margin-bottom:8px;
+}
+input, select, textarea {
+  width:100%;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--glass-border); border-radius:2px;
+  padding:12px 16px; color:var(--white);
+  font-family:var(--font-body); font-size:15px; letter-spacing:0.5px;
+  outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color:rgba(255,26,26,0.5); box-shadow:0 0 0 3px rgba(255,26,26,0.08);
+}
+input::placeholder, textarea::placeholder { color:rgba(255,255,255,0.2); }
+select option { background:#111; color:var(--white); }
+textarea { resize:vertical; min-height:90px; }
+input[type="file"] { padding:10px 16px; cursor:pointer; }
+input[type="file"]::file-selector-button {
+  background:var(--red-dim); color:var(--red); border:1px solid rgba(255,26,26,0.3);
+  border-radius:2px; padding:4px 12px; cursor:pointer;
+  font-family:var(--font-body); font-size:12px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; margin-right:12px;
+}
+.btn-submit {
+  width:100%; padding:15px;
+  background:var(--red); color:#fff; border:none; border-radius:2px;
+  font-family:var(--font-head); font-size:22px; letter-spacing:3px;
+  cursor:pointer; margin-top:8px;
+  transition:background 0.2s, box-shadow 0.2s;
+}
+.btn-submit:hover { background:#cc0000; box-shadow:0 0 24px rgba(255,26,26,0.4); }
+</style>
+</head>
+<body>
+<div id="cursor-glow"></div>
+<nav>
+  <div class="nav-logo">HOT<span>WHEELS</span></div>
+  <a href="{% url 'admin_dashboard' %}" class="nav-back">← Dashboard</a>
+</nav>
+<div class="container">
+  <div class="page-title">ADD PRODUCT</div>
+  <div class="page-sub">Add a new item to inventory</div>
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="field">
+        <label>Product Name</label>
+        <input type="text" name="name" placeholder="e.g. Bone Shaker" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Price (₹)</label>
+          <input type="number" name="price" step="0.01" placeholder="299.00" required>
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <input type="number" name="quantity" placeholder="10" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select name="category" required>
+          <option value="" disabled selected>Select category</option>
+          <option value="Classic">Classic</option>
+          <option value="Racing">Racing</option>
+          <option value="Monster Truck">Monster Truck</option>
+          <option value="Limited Edition">Limited Edition</option>
+          <option value="Muscle Car">Muscle Car</option>
+          <option value="Super Car">Super Car</option>
+          <option value="Off Road">Off Road</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea name="description" placeholder="Brief product description..."></textarea>
+      </div>
+      <div class="field">
+        <label>Product Image</label>
+        <input type="file" name="image" accept="image/*">
+      </div>
+      <button type="submit" class="btn-submit">ADD TO INVENTORY</button>
+    </form>
+  </div>
+</div>
+<script>
+  const glow = document.getElementById('cursor-glow');
+  document.addEventListener('mousemove', e => {
+    glow.style.transform = `translate(${e.clientX - 180}px, ${e.clientY - 180}px)`;
+  });
+</script>
+</body>
+</html>

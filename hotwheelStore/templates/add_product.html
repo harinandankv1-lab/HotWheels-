@@ -1,0 +1,1248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Product · HotWheels</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red: #FF1A1A;
+  --red-glow: rgba(255,26,26,0.4);
+  --red-dim: rgba(255,26,26,0.12);
+  --white: #ffffff;
+  --off-white: rgba(255,255,255,0.85);
+  --muted: rgba(255,255,255,0.45);
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #000;
+  color: var(--white);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ========== CURSOR ========== */
+#cursor-glow {
+  position: fixed;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center,
+    rgba(255,26,26,0.28) 0%, rgba(255,26,26,0.10) 35%, transparent 70%);
+  pointer-events: none;
+  z-index: 9998;
+  top: 0; left: 0;
+  will-change: transform;
+  transform: translate(-180px, -180px);
+}
+
+#cursor-dot {
+  position: fixed;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  pointer-events: none;
+  z-index: 9999;
+  top: 0; left: 0;
+  will-change: transform;
+  transform: translate(-3px, -3px);
+  transition: width 0.2s, height 0.2s, opacity 0.2s;
+  box-shadow: 0 0 8px var(--red);
+}
+
+/* Noise grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.45;
+}
+
+/* ========== NAVBAR ========== */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 48px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.nav-logo {
+  font-family: var(--font-head);
+  font-size: 26px;
+  letter-spacing: 4px;
+  color: var(--red);
+  text-decoration: none;
+  text-shadow: 0 0 20px rgba(255,26,26,0.5);
+}
+
+.nav-links {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0; right: 0;
+  height: 1px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.nav-links a:hover { color: var(--white); }
+.nav-links a:hover::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--white); }
+.nav-links a.active::after { transform: scaleX(1); }
+
+/* ── PROFILE DROPDOWN ── */
+.nav-profile-wrap { position: relative; list-style: none; }
+.nav-profile-btn {
+  display: flex; align-items: center; gap: 9px;
+  background: transparent;
+  border: 1px solid rgba(255,26,26,0.3);
+  border-radius: 40px; padding: 5px 14px 5px 6px;
+  cursor: pointer; color: var(--muted);
+  font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: 1px;
+  transition: border-color .3s, color .3s, background .3s;
+}
+.nav-profile-btn:hover, .nav-profile-btn.open {
+  border-color: rgba(255,26,26,0.7); color: var(--white); background: rgba(255,26,26,0.06);
+}
+.nav-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--red); color: #fff;
+  font-family: var(--font-head); font-size: 14px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(255,26,26,0.5);
+}
+.nav-profile-email { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-chevron { color: var(--muted); transition: transform .3s; flex-shrink: 0; }
+.nav-profile-btn.open .nav-chevron { transform: rotate(180deg); color: var(--red); }
+.nav-dropdown {
+  position: absolute; top: calc(100% + 14px); right: 0; width: 240px;
+  background: rgba(10,10,10,0.96);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,26,26,0.2); border-radius: 4px; overflow: hidden;
+  opacity: 0; pointer-events: none; transform: translateY(-8px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.nav-dropdown::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+}
+.nav-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+.nav-dropdown-header { display: flex; align-items: center; gap: 12px; padding: 18px 18px 14px; }
+.nav-dropdown-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--red); color: #fff;
+  font-family: var(--font-head); font-size: 18px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(255,26,26,0.4);
+}
+.nav-dropdown-name { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: var(--white); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-dropdown-tag { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--red); margin-top: 2px; }
+.nav-dropdown-divider { height: 1px; background: var(--glass-border); margin: 0 0 4px; }
+.nav-dropdown-item {
+  display: flex; align-items: center; gap: 10px; padding: 11px 18px;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px;
+  color: var(--muted); text-decoration: none; transition: background .2s, color .2s;
+}
+.nav-dropdown-item:hover { background: rgba(255,26,26,0.06); color: var(--white); }
+.nav-dropdown-logout { color: rgba(255,80,80,0.7); }
+.nav-dropdown-logout:hover { background: rgba(255,26,26,0.12); color: var(--red); }
+
+/* ========== SPEED STRIPE ========== */
+.speed-stripe {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red), #ff6b00, var(--red), transparent);
+  background-size: 200% 100%;
+  animation: stripeMove 3s linear infinite;
+  margin-top: 70px;
+}
+
+/* ========== PAGE HEADER ========== */
+.page-header {
+  padding: 56px 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: 'ADD';
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-head);
+  font-size: 200px;
+  color: rgba(255,26,26,0.04);
+  line-height: 1;
+  pointer-events: none;
+  letter-spacing: -10px;
+  user-select: none;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.breadcrumb a {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.breadcrumb a:hover { color: var(--red); }
+
+.breadcrumb-sep {
+  color: rgba(255,26,26,0.4);
+  font-size: 12px;
+}
+
+.breadcrumb-current {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.page-eyebrow {
+  font-size: 11px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+
+.page-title {
+  font-family: var(--font-head);
+  font-size: clamp(48px, 7vw, 80px);
+  letter-spacing: 4px;
+  line-height: 0.95;
+  color: var(--white);
+}
+
+.page-title span {
+  color: var(--red);
+  filter: drop-shadow(0 0 20px rgba(255,26,26,0.5));
+}
+
+/* ========== FORM LAYOUT ========== */
+.form-section {
+  padding: 0 48px 80px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  align-items: start;
+}
+
+/* ========== FORM CARD ========== */
+.form-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.form-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+}
+
+.form-card-header {
+  padding: 28px 36px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.form-card-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--red-dim);
+  border: 1px solid rgba(255,26,26,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  flex-shrink: 0;
+}
+
+.form-card-title {
+  font-family: var(--font-head);
+  font-size: 22px;
+  letter-spacing: 3px;
+}
+
+.form-card-sub {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.form-body {
+  padding: 36px;
+}
+
+/* ========== FORM FIELDS ========== */
+.field-group {
+  margin-bottom: 28px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+label span.required {
+  color: var(--red);
+  margin-left: 3px;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,26,26,0.4);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 13px 16px;
+  outline: none;
+  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="text"].has-icon,
+input[type="number"].has-icon,
+select.has-icon {
+  padding-left: 40px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(255,26,26,0.5);
+  background: rgba(255,26,26,0.04);
+  box-shadow: 0 0 0 3px rgba(255,26,26,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255,255,255,0.2);
+  font-weight: 400;
+}
+
+select option {
+  background: #111;
+  color: var(--white);
+}
+
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(255,26,26,0.5);
+  pointer-events: none;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.6;
+}
+
+/* Field hint */
+.field-hint {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.25);
+  margin-top: 7px;
+}
+
+/* ========== IMAGE UPLOAD ========== */
+.upload-zone {
+  border: 1px dashed rgba(255,26,26,0.25);
+  border-radius: 4px;
+  background: rgba(255,26,26,0.03);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: rgba(255,26,26,0.5);
+  background: rgba(255,26,26,0.07);
+}
+
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+
+.upload-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--red-dim);
+  border: 1px solid rgba(255,26,26,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  margin: 0 auto 14px;
+}
+
+.upload-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--off-white);
+  margin-bottom: 4px;
+}
+
+.upload-sub {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+/* Image preview */
+#imagePreview {
+  display: none;
+  margin-top: 16px;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255,26,26,0.2);
+}
+
+#imagePreview img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.85);
+}
+
+#imagePreview .preview-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.7);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#imagePreview .preview-remove {
+  color: var(--red);
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+/* ========== SUBMIT BUTTON ========== */
+.submit-btn {
+  width: 100%;
+  padding: 16px 32px;
+  background: transparent;
+  border: 1px solid rgba(255,26,26,0.5);
+  border-radius: 2px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.submit-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+.submit-btn:hover::before { transform: scaleX(1); }
+.submit-btn:hover {
+  box-shadow: 0 0 40px rgba(255,26,26,0.4);
+  border-color: var(--red);
+}
+
+.submit-btn span { position: relative; z-index: 1; }
+
+.submit-btn svg { position: relative; z-index: 1; }
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 100px;
+}
+
+/* Preview card */
+.preview-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.preview-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+}
+
+.preview-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-card-header span {
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red);
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+
+/* Live product preview */
+.live-product {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 20px;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+.live-product:hover {
+  box-shadow: 0 10px 40px rgba(255,26,26,0.2);
+  border-color: rgba(255,26,26,0.25);
+}
+
+.live-product-img {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, rgba(255,26,26,0.08), rgba(0,0,0,0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,26,26,0.2);
+  font-family: var(--font-head);
+  font-size: 48px;
+  letter-spacing: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.live-product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.live-product-info {
+  padding: 14px 16px 18px;
+}
+
+.live-product-tag {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  border: 1px solid rgba(255,26,26,0.3);
+  padding: 2px 7px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+}
+
+.live-product-name {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  margin-bottom: 3px;
+  min-height: 22px;
+}
+
+.live-product-sub {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  min-height: 16px;
+}
+
+.live-product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.live-product-price {
+  font-family: var(--font-head);
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: var(--white);
+  min-height: 28px;
+}
+
+.live-product-add {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--red-dim);
+  border: 1px solid rgba(255,26,26,0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--red);
+  font-size: 20px;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Info card */
+.info-card {
+  background: rgba(255,26,26,0.04);
+  border: 1px solid rgba(255,26,26,0.12);
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.info-card-title {
+  font-family: var(--font-head);
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+}
+
+.info-item:last-child { margin-bottom: 0; }
+
+.info-bullet {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--red);
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+/* ========== MESSAGES ========== */
+.messages-wrap {
+  padding: 0 48px 20px;
+}
+
+.message {
+  padding: 14px 20px;
+  border-radius: 2px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.message.success {
+  background: rgba(0,200,100,0.08);
+  border: 1px solid rgba(0,200,100,0.2);
+  color: #00C864;
+}
+
+.message.error {
+  background: rgba(255,26,26,0.08);
+  border: 1px solid rgba(255,26,26,0.2);
+  color: var(--red);
+}
+
+/* ========== FOOTER ========== */
+footer {
+  border-top: 1px solid var(--glass-border);
+  padding: 40px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-logo {
+  font-family: var(--font-head);
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--red);
+}
+
+.footer-copy {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+/* ========== KEYFRAMES ========== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes stripeMove {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--red); }
+  50%       { opacity: 0.4; box-shadow: 0 0 4px var(--red); }
+}
+
+/* Reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+</style>
+</head>
+
+<body>
+
+<div id="cursor-glow"></div>
+<div id="cursor-dot"></div>
+
+<!-- ========== NAV ========== -->
+<nav>
+  <a href="/" class="nav-logo">HOTWHEELS</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/products/">Products</a></li>
+    <li><a href="/cart/">Cart</a></li>
+    {% if request.session.email %}
+    <li class="nav-profile-wrap">
+      <button class="nav-profile-btn" id="profileBtn" aria-expanded="false">
+        <span class="nav-avatar">{{ request.session.email|first|upper }}</span>
+        <span class="nav-profile-email">{{ request.session.email }}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" class="nav-chevron">
+          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="nav-dropdown" id="profileDropdown">
+        <div class="nav-dropdown-header">
+          <span class="nav-dropdown-avatar">{{ request.session.email|first|upper }}</span>
+          <div>
+            <div class="nav-dropdown-name">{{ request.session.email }}</div>
+            <div class="nav-dropdown-tag">Admin</div>
+          </div>
+        </div>
+        <div class="nav-dropdown-divider"></div>
+        <a href="/profile/" class="nav-dropdown-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
+        </a>
+        <a href="/orders/" class="nav-dropdown-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+          My Orders
+        </a>
+        <a href="/cart/" class="nav-dropdown-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Cart
+        </a>
+        <div class="nav-dropdown-divider"></div>
+        <a href="/logout/" class="nav-dropdown-item nav-dropdown-logout">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
+    </li>
+    {% else %}
+    <li><a href="/login/">Login</a></li>
+    {% endif %}
+  </ul>
+</nav>
+
+<!-- Speed stripe just below nav -->
+<div class="speed-stripe"></div>
+
+<!-- ========== MESSAGES ========== -->
+{% if messages %}
+<div class="messages-wrap" style="margin-top: 20px;">
+  {% for message in messages %}
+  <div class="message {{ message.tags }}">
+    {% if message.tags == 'success' %}
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    {% else %}
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    {% endif %}
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ========== PAGE HEADER ========== -->
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="/products/">Products</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Add Product</span>
+  </div>
+  <p class="page-eyebrow">Admin · Inventory</p>
+  <h1 class="page-title">ADD <span>PRODUCT</span></h1>
+</div>
+
+<!-- ========== FORM SECTION ========== -->
+<div class="form-section">
+
+  <!-- MAIN FORM -->
+  <form method="POST" action="/add-product/" enctype="multipart/form-data" id="productForm">
+    {% csrf_token %}
+
+    <!-- Product Details Card -->
+    <div class="form-card reveal">
+      <div class="form-card-header">
+        <div class="form-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div>
+          <div class="form-card-title">Product Details</div>
+          <div class="form-card-sub">Core information about this car</div>
+        </div>
+      </div>
+      <div class="form-body">
+
+        <!-- Name -->
+        <div class="field-group">
+          <label for="name">Product Name <span class="required">*</span></label>
+          <div class="input-wrap">
+            <div class="input-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 7h10M7 12h10M7 17h6"/></svg>
+            </div>
+            <input type="text" id="name" name="name" class="has-icon"
+                   placeholder="e.g. Dodge Charger R/T" required
+                   oninput="updatePreview()">
+          </div>
+        </div>
+
+        <!-- Price & Quantity -->
+        <div class="field-row">
+          <div>
+            <label for="price">Price (₹) <span class="required">*</span></label>
+            <div class="input-wrap">
+              <div class="input-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+              </div>
+              <input type="number" id="price" name="price" class="has-icon"
+                     placeholder="299" min="1" step="1" required
+                     oninput="updatePreview()">
+            </div>
+          </div>
+          <div>
+            <label for="quantity">Quantity <span class="required">*</span></label>
+            <div class="input-wrap">
+              <div class="input-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              </div>
+              <input type="number" id="quantity" name="quantity" class="has-icon"
+                     placeholder="10" min="1" required>
+            </div>
+            <div class="field-hint">If product exists, quantity will be added to current stock</div>
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="field-group">
+          <label for="category">Category <span class="required">*</span></label>
+          <div class="select-wrap">
+            <select id="category" name="category" required onchange="updatePreview()">
+              <option value="" disabled selected>Select a category</option>
+              <option value="Muscle Series">Muscle Series</option>
+              <option value="Exotic Fleet">Exotic Fleet</option>
+              <option value="JDM Icons">JDM Icons</option>
+              <option value="Limited Edition">Limited Edition</option>
+              <option value="Collector Series">Collector Series</option>
+              <option value="Race Ready">Race Ready</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="field-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description"
+                    placeholder="Describe the car — scale, materials, special features..."></textarea>
+          <div class="field-hint">Optional but recommended for collector appeal</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Image Upload Card -->
+    <div class="form-card reveal reveal-delay-1" style="margin-top: 24px;">
+      <div class="form-card-header">
+        <div class="form-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div>
+          <div class="form-card-title">Product Image</div>
+          <div class="form-card-sub">High quality photo of the die-cast model</div>
+        </div>
+      </div>
+      <div class="form-body">
+
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="image" name="image" accept="image/*" onchange="handleImageChange(event)">
+          <div class="upload-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="upload-text">Drop image here or click to browse</div>
+          <div class="upload-sub">PNG, JPG, WEBP · Max 10MB · Recommended 800×600px</div>
+        </div>
+
+        <div id="imagePreview">
+          <img id="previewImg" src="" alt="Preview">
+          <div class="preview-label">
+            <span id="previewFileName">preview</span>
+            <button type="button" class="preview-remove" onclick="removeImage()">✕ Remove</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="submit-btn reveal reveal-delay-2" style="margin-top: 24px;">
+      <span>Add to Collection</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+
+  </form>
+
+  <!-- ========== SIDEBAR ========== -->
+  <div class="sidebar">
+
+    <!-- Live Preview -->
+    <div class="preview-card reveal">
+      <div class="preview-card-header">
+        <div class="live-dot"></div>
+        <span>Live Preview</span>
+      </div>
+      <div class="live-product">
+        <div class="live-product-img" id="previewImgWrap">
+          <img id="previewImgSidebar" src="" alt="">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:52px;height:52px;" id="previewPlaceholderIcon">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+          </svg>
+        </div>
+        <div class="live-product-info">
+          <span class="live-product-tag">New Drop</span>
+          <div class="live-product-name" id="previewName">Product Name</div>
+          <div class="live-product-sub" id="previewCategory">Category · 1:64</div>
+          <div class="live-product-footer">
+            <span class="live-product-price" id="previewPrice">₹—</span>
+            <div class="live-product-add">+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info card -->
+    <div class="info-card reveal reveal-delay-1">
+      <div class="info-card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Smart Add Logic
+      </div>
+      <div class="info-item">
+        <div class="info-bullet"></div>
+        <div>If a product with the same <strong style="color:var(--off-white)">name + category</strong> already exists, its quantity will be updated instead of creating a duplicate.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-bullet"></div>
+        <div>Price and description are always updated when quantity is increased.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-bullet"></div>
+        <div>A new image will only replace the existing one if you upload a new file.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <span class="footer-logo">HOTWHEELS</span>
+  <span class="footer-copy">© 2026 HotWheels · All Rights Reserved</span>
+</footer>
+
+<script>
+/* ====== CURSOR ====== */
+(function(){
+  const glow = document.getElementById('cursor-glow');
+  const dot  = document.getElementById('cursor-dot');
+  let mx = -300, my = -300;
+  let glowX = -300, glowY = -300;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.transform = `translate(${mx - 3}px, ${my - 3}px)`;
+  }, { passive: true });
+
+  function tick() {
+    glowX += (mx - glowX) * 0.1;
+    glowY += (my - glowY) * 0.1;
+    glow.style.transform = `translate(${glowX - 180}px, ${glowY - 180}px)`;
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  document.addEventListener('mousedown', () => { glow.style.opacity = '1.4'; });
+  document.addEventListener('mouseup',   () => { glow.style.opacity = '1'; });
+
+  document.querySelectorAll('a, button, .upload-zone').forEach(el => {
+    el.addEventListener('mouseenter', () => { dot.style.width = dot.style.height = '14px'; dot.style.opacity = '0.6'; });
+    el.addEventListener('mouseleave', () => { dot.style.width = dot.style.height = '6px';  dot.style.opacity = '1'; });
+  });
+})();
+
+/* ====== SCROLL REVEAL ====== */
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+})();
+
+/* ====== LIVE PREVIEW ====== */
+function updatePreview() {
+  const name  = document.getElementById('name').value.trim();
+  const price = document.getElementById('price').value.trim();
+  const cat   = document.getElementById('category').value;
+
+  document.getElementById('previewName').textContent     = name     || 'Product Name';
+  document.getElementById('previewPrice').textContent    = price    ? `₹${price}` : '₹—';
+  document.getElementById('previewCategory').textContent = cat      ? `${cat} · 1:64` : 'Category · 1:64';
+}
+
+/* ====== IMAGE UPLOAD ====== */
+function handleImageChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const src = e.target.result;
+
+    // Large preview below upload zone
+    document.getElementById('previewImg').src = src;
+    document.getElementById('previewFileName').textContent = file.name;
+    document.getElementById('imagePreview').style.display = 'block';
+
+    // Sidebar preview
+    const sideImg = document.getElementById('previewImgSidebar');
+    const icon    = document.getElementById('previewPlaceholderIcon');
+    sideImg.src   = src;
+    sideImg.style.display = 'block';
+    icon.style.display    = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  document.getElementById('image').value = '';
+  document.getElementById('imagePreview').style.display = 'none';
+  document.getElementById('previewImgSidebar').style.display = 'none';
+  document.getElementById('previewPlaceholderIcon').style.display = 'block';
+}
+
+/* ====== DRAG & DROP ====== */
+(function(){
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('image').files = dt.files;
+      handleImageChange({ target: { files: [file] } });
+    }
+  });
+})();
+
+/* ====== PROFILE DROPDOWN ====== */
+(function(){
+  const btn      = document.getElementById('profileBtn');
+  const dropdown = document.getElementById('profileDropdown');
+  if (!btn || !dropdown) return;
+  function open()  { btn.classList.add('open'); dropdown.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  function close() { btn.classList.remove('open'); dropdown.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+  btn.addEventListener('click', e => { e.stopPropagation(); btn.classList.contains('open') ? close() : open(); });
+  document.addEventListener('click', () => close());
+  dropdown.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+</script>
+
+</body>
+</html>

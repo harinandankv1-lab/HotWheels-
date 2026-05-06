@@ -1,0 +1,572 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile · HotWheels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red: #FF1A1A;
+  --red-dim: rgba(255,26,26,0.10);
+  --red-glow: rgba(255,26,26,0.35);
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --muted: rgba(255,255,255,0.45);
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+
+html, body { background: #000; color: #fff; font-family: var(--font-body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+/* GRAIN */
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1; opacity: 0.45;
+}
+
+/* GRID BG */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image: linear-gradient(rgba(255,26,26,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,26,26,0.035) 1px, transparent 1px);
+  background-size: 60px 60px; pointer-events: none;
+}
+
+/* CURSOR */
+#cursor-glow {
+  position: fixed; width: 360px; height: 360px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,26,26,0.22) 0%, rgba(255,26,26,0.07) 40%, transparent 70%);
+  pointer-events: none; z-index: 9998; top: 0; left: 0;
+  will-change: transform; transform: translate(-180px,-180px);
+}
+#cursor-dot {
+  position: fixed; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--red); pointer-events: none; z-index: 9999;
+  top: 0; left: 0; will-change: transform; transform: translate(-3px,-3px);
+  box-shadow: 0 0 8px var(--red); transition: width .2s, height .2s, opacity .2s;
+}
+
+/* SPEED STRIPE */
+.speed-stripe {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 2px; z-index: 200;
+  background: linear-gradient(90deg, transparent, var(--red), #ff6b00, var(--red), transparent);
+  background-size: 200% 100%; animation: stripeMove 3s linear infinite;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 48px;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+}
+.nav-logo { font-family: var(--font-head); font-size: 24px; letter-spacing: 4px; color: var(--red); text-decoration: none; text-shadow: 0 0 20px rgba(255,26,26,0.5); }
+.nav-links { display: flex; gap: 32px; align-items: center; list-style: none; }
+.nav-links a { font-weight: 600; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color .3s; }
+.nav-links a:hover { color: #fff; }
+.cart-badge {
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+}
+.cart-count {
+  background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 1;
+  padding: 2px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+}
+
+/* LAYOUT */
+.page {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  padding: 110px 48px 80px;
+  max-width: 1100px; margin: 0 auto;
+}
+
+/* PAGE HEADER */
+.page-eyebrow { font-size: 11px; letter-spacing: 6px; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+.page-title { font-family: var(--font-head); font-size: 64px; letter-spacing: 5px; line-height: 1; margin-bottom: 48px; }
+
+/* MESSAGES */
+.msg { padding: 13px 18px; border-radius: 2px; margin-bottom: 24px; font-size: 13px; letter-spacing: 1px; font-weight: 600; }
+.msg-success { background: rgba(0,255,100,0.06); border: 1px solid rgba(0,255,100,0.2); color: #4ade80; }
+.msg-error   { background: rgba(255,26,26,0.1);  border: 1px solid rgba(255,26,26,0.3);  color: #ff6b6b; }
+
+/* MAIN GRID */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── SHARED CARD ── */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  position: relative; overflow: hidden;
+  opacity: 0; transform: translateY(24px);
+  animation: fadeUp .7s cubic-bezier(.4,0,.2,1) forwards;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red) 50%, transparent);
+}
+.card:nth-child(2) { animation-delay: .1s; }
+.card:nth-child(3) { animation-delay: .15s; }
+.card:nth-child(4) { animation-delay: .2s; }
+
+/* ── LEFT COLUMN ── */
+.left-col { display: flex; flex-direction: column; gap: 20px; }
+
+/* Avatar card */
+.avatar-card { padding: 40px 32px; text-align: center; }
+.avatar-ring {
+  width: 96px; height: 96px; border-radius: 50%;
+  border: 2px solid rgba(255,26,26,0.4);
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+  background: radial-gradient(circle, rgba(255,26,26,0.1), transparent);
+  position: relative;
+}
+.avatar-ring::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid rgba(255,26,26,0.15);
+}
+.avatar-initials {
+  font-family: var(--font-head); font-size: 38px; letter-spacing: 2px; color: var(--red);
+  line-height: 1;
+}
+.avatar-name {
+  font-family: var(--font-head); font-size: 28px; letter-spacing: 3px;
+  line-height: 1; margin-bottom: 6px;
+}
+.avatar-email { font-size: 13px; color: var(--muted); letter-spacing: 1px; word-break: break-all; }
+
+.member-badge {
+  display: inline-block; margin-top: 16px;
+  font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--red); border: 1px solid rgba(255,26,26,0.3);
+  padding: 4px 12px; border-radius: 2px;
+  background: var(--red-dim);
+}
+
+/* Stats mini */
+.stats-card { padding: 0; }
+.stat-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--glass-border);
+  transition: background .2s;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-row:hover { background: rgba(255,255,255,0.02); }
+.stat-row-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.stat-row-value { font-family: var(--font-head); font-size: 28px; color: var(--red); letter-spacing: 2px; }
+
+/* Actions card */
+.actions-card { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.action-btn {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-radius: 2px;
+  font-family: var(--font-body); font-weight: 700; font-size: 13px;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; text-decoration: none;
+  border: 1px solid transparent;
+  transition: background .3s, border-color .3s;
+  color: var(--muted);
+  background: transparent; width: 100%; text-align: left;
+}
+.action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.action-btn:hover { background: rgba(255,255,255,0.04); border-color: var(--glass-border); color: #fff; }
+.action-btn.danger { color: rgba(255,80,80,0.7); }
+.action-btn.danger:hover { background: rgba(255,26,26,0.08); border-color: rgba(255,26,26,0.2); color: #ff6b6b; }
+
+/* ── RIGHT COLUMN ── */
+.right-col { display: flex; flex-direction: column; gap: 20px; }
+
+/* Info card */
+.info-card { padding: 36px 40px; }
+.info-card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 32px;
+}
+.info-card-title { font-family: var(--font-head); font-size: 28px; letter-spacing: 3px; }
+.edit-toggle-btn {
+  font-family: var(--font-body); font-weight: 700; font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--red); background: var(--red-dim);
+  border: 1px solid rgba(255,26,26,0.3); border-radius: 2px;
+  padding: 8px 18px; cursor: pointer;
+  transition: background .3s, box-shadow .3s;
+}
+.edit-toggle-btn:hover { background: rgba(255,26,26,0.18); box-shadow: 0 0 20px rgba(255,26,26,0.2); }
+
+/* View mode */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.info-field label { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
+.info-field .field-value { font-size: 16px; font-weight: 600; letter-spacing: 1px; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
+.info-field.full { grid-column: 1 / -1; }
+
+/* Edit mode */
+.edit-form { display: none; }
+.edit-form.active { display: block; }
+.view-mode.hidden { display: none; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 7px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); }
+.form-group input {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 2px;
+  padding: 12px 16px; color: #fff;
+  font-family: var(--font-body); font-size: 15px; font-weight: 600; letter-spacing: 1px;
+  outline: none; transition: border-color .3s, background .3s, box-shadow .3s;
+}
+.form-group input::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; }
+.form-group input:focus { border-color: rgba(255,26,26,0.5); background: rgba(255,26,26,0.04); box-shadow: 0 0 0 3px rgba(255,26,26,0.08); }
+
+.form-hint { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+
+.edit-actions { display: flex; gap: 12px; margin-top: 28px; }
+.btn-save {
+  padding: 13px 32px;
+  font-family: var(--font-head); font-size: 18px; letter-spacing: 3px;
+  color: #fff; background: var(--red); border: 1px solid var(--red); border-radius: 2px;
+  cursor: pointer; transition: box-shadow .3s, transform .2s;
+}
+.btn-save:hover { box-shadow: 0 0 30px rgba(255,26,26,0.4); transform: translateY(-1px); }
+.btn-cancel {
+  padding: 13px 24px;
+  font-family: var(--font-head); font-size: 18px; letter-spacing: 3px;
+  color: var(--muted); background: transparent;
+  border: 1px solid var(--glass-border); border-radius: 2px;
+  cursor: pointer; transition: color .3s, border-color .3s;
+}
+.btn-cancel:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+/* Activity card */
+.activity-card { padding: 32px 40px; }
+.activity-title { font-family: var(--font-head); font-size: 24px; letter-spacing: 3px; margin-bottom: 24px; }
+.activity-list { display: flex; flex-direction: column; gap: 0; }
+.activity-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 0; border-bottom: 1px solid var(--glass-border);
+  transition: background .2s;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--red); box-shadow: 0 0 8px var(--red);
+}
+.activity-dot.muted { background: rgba(255,255,255,0.2); box-shadow: none; }
+.activity-text { flex: 1; font-size: 14px; letter-spacing: .5px; color: var(--muted); }
+.activity-text strong { color: #fff; font-weight: 700; }
+.activity-time { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.25); }
+
+/* ── LOGOUT MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #0a0a0a; border: 1px solid rgba(255,26,26,0.2); border-radius: 4px;
+  padding: 48px; text-align: center; max-width: 360px; width: 100%;
+  transform: scale(.95); transition: transform .3s;
+  position: relative;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--red) 50%, transparent); }
+.modal-icon { font-size: 40px; margin-bottom: 16px; }
+.modal-title { font-family: var(--font-head); font-size: 32px; letter-spacing: 3px; margin-bottom: 10px; }
+.modal-desc { color: var(--muted); font-size: 14px; letter-spacing: 1px; line-height: 1.7; margin-bottom: 32px; }
+.modal-actions { display: flex; gap: 12px; justify-content: center; }
+.modal-confirm {
+  padding: 12px 28px; background: var(--red); border: 1px solid var(--red); border-radius: 2px;
+  font-family: var(--font-head); font-size: 18px; letter-spacing: 2px; color: #fff;
+  cursor: pointer; text-decoration: none;
+  transition: box-shadow .3s;
+}
+.modal-confirm:hover { box-shadow: 0 0 24px rgba(255,26,26,0.5); }
+.modal-cancel {
+  padding: 12px 24px; background: transparent; border: 1px solid var(--glass-border); border-radius: 2px;
+  font-family: var(--font-head); font-size: 18px; letter-spacing: 2px; color: var(--muted);
+  cursor: pointer; transition: color .3s, border-color .3s;
+}
+.modal-cancel:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes stripeMove { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+
+<div id="cursor-glow"></div>
+<div id="cursor-dot"></div>
+<div class="bg-grid"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">HOTWHEELS</a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/products/">Products</a></li>
+    <li>
+      <a href="/cart/" class="cart-badge">
+        Cart
+        <span class="cart-count">{{ cart_count|default:"0" }}</span>
+      </a>
+    </li>
+    <li><a href="#" onclick="openLogout()" style="color:rgba(255,80,80,0.7);">Logout</a></li>
+  </ul>
+</nav>
+
+<!-- MAIN -->
+<div class="page">
+
+  <p class="page-eyebrow">Your Account</p>
+  <h1 class="page-title">PROFILE</h1>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="msg {% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="profile-grid">
+
+    <!-- ═══ LEFT COLUMN ═══ -->
+    <div class="left-col">
+
+      <!-- Avatar -->
+      <div class="card avatar-card">
+        <div class="avatar-ring">
+          <span class="avatar-initials">
+            {{ user.name|first|upper }}{% if user.name|length > 1 %}{{ user.name|cut:" "|slice:"1:2"|upper }}{% endif %}
+          </span>
+        </div>
+        <div class="avatar-name">{{ user.name|upper }}</div>
+        <div class="avatar-email">{{ user.email }}</div>
+        <span class="member-badge">Member</span>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="card stats-card">
+        <div class="stat-row">
+          <span class="stat-row-label">Cart Items</span>
+          <span class="stat-row-value">{{ cart_count|default:"0" }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row-label">Orders</span>
+          <span class="stat-row-value">{{ order_count|default:"0" }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-row-label">Status</span>
+          <span class="stat-row-value" style="font-size:16px;color:#4ade80;letter-spacing:1px;">Active</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card actions-card">
+        <a href="/cart/" class="action-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          View Cart
+        </a>
+        <a href="/products/" class="action-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Browse Products
+        </a>
+        <a href="/orders/" class="action-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          My Orders
+        </a>
+        <button class="action-btn danger" onclick="openLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Logout
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ═══ RIGHT COLUMN ═══ -->
+    <div class="right-col">
+
+      <!-- Profile info + edit -->
+      <div class="card info-card">
+        <div class="info-card-header">
+          <h2 class="info-card-title">PERSONAL INFO</h2>
+          <button class="edit-toggle-btn" id="editToggle" onclick="toggleEdit()">Edit Profile</button>
+        </div>
+
+        <!-- VIEW MODE -->
+        <div class="view-mode" id="viewMode">
+          <div class="info-grid">
+            <div class="info-field">
+              <label>Full Name</label>
+              <div class="field-value">{{ user.name }}</div>
+            </div>
+            <div class="info-field">
+              <label>Phone</label>
+              <div class="field-value">{{ user.phone|default:"—" }}</div>
+            </div>
+            <div class="info-field full">
+              <label>Email Address</label>
+              <div class="field-value">{{ user.email }}</div>
+            </div>
+            <div class="info-field full">
+              <label>Delivery Address</label>
+              <div class="field-value">{{ user.address|default:"—" }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDIT MODE -->
+        <form class="edit-form" id="editForm" method="POST" action="{% url 'edit_profile' %}">
+          {% csrf_token %}
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="e_name">Full Name</label>
+              <input type="text" id="e_name" name="name" value="{{ user.name }}" placeholder="Full Name">
+            </div>
+            <div class="form-group">
+              <label for="e_phone">Phone</label>
+              <input type="tel" id="e_phone" name="phone" value="{{ user.phone|default:'' }}" placeholder="+91 00000 00000">
+            </div>
+            <div class="form-group full">
+              <label for="e_email">Email (read-only)</label>
+              <input type="email" id="e_email" value="{{ user.email }}" disabled style="opacity:.4;cursor:not-allowed;">
+            </div>
+            <div class="form-group full">
+              <label for="e_address">Delivery Address</label>
+              <input type="text" id="e_address" name="address" value="{{ user.address|default:'' }}" placeholder="Street, City, State">
+            </div>
+            <div class="form-group full">
+              <label for="e_password">New Password</label>
+              <input type="password" id="e_password" name="password" placeholder="Leave blank to keep current">
+              <span class="form-hint">Only fill if you want to change your password.</span>
+            </div>
+          </div>
+          <div class="edit-actions">
+            <button type="submit" class="btn-save">Save Changes</button>
+            <button type="button" class="btn-cancel" onclick="toggleEdit()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card activity-card">
+        <h2 class="activity-title">RECENT ACTIVITY</h2>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-text"><strong>Account active</strong> — Profile session started</div>
+            <div class="activity-time">Now</div>
+          </div>
+          {% if cart_count > 0 %}
+          <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-text"><strong>{{ cart_count }} item{{ cart_count|pluralize }}</strong> waiting in your cart</div>
+            <div class="activity-time">Cart</div>
+          </div>
+          {% endif %}
+          {% if order_count > 0 %}
+          <div class="activity-item">
+            <div class="activity-dot muted"></div>
+            <div class="activity-text"><strong>{{ order_count }} order{{ order_count|pluralize }}</strong> placed in total</div>
+            <div class="activity-time">Orders</div>
+          </div>
+          {% endif %}
+          <div class="activity-item">
+            <div class="activity-dot muted"></div>
+            <div class="activity-text">Registered with <strong>{{ user.email }}</strong></div>
+            <div class="activity-time">Joined</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <div class="modal-icon">🔑</div>
+    <div class="modal-title">LEAVING?</div>
+    <p class="modal-desc">You'll need to login again to access your cart and orders.</p>
+    <div class="modal-actions">
+      <a href="{% url 'logout' %}" class="modal-confirm">Yes, Logout</a>
+      <button class="modal-cancel" onclick="closeLogout()">Stay</button>
+    </div>
+  </div>
+</div>
+
+<div class="speed-stripe"></div>
+
+<script>
+/* CURSOR */
+(function(){
+  const glow=document.getElementById('cursor-glow'), dot=document.getElementById('cursor-dot');
+  let mx=-300,my=-300,gx=-300,gy=-300;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    dot.style.transform=`translate(${mx-3}px,${my-3}px)`;
+  },{passive:true});
+  (function tick(){
+    gx+=(mx-gx)*.1; gy+=(my-gy)*.1;
+    glow.style.transform=`translate(${gx-180}px,${gy-180}px)`;
+    requestAnimationFrame(tick);
+  })();
+  document.querySelectorAll('a,button,input,.card').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ dot.style.width=dot.style.height='12px'; dot.style.opacity='.5'; });
+    el.addEventListener('mouseleave',()=>{ dot.style.width=dot.style.height='6px'; dot.style.opacity='1'; });
+  });
+})();
+
+/* EDIT TOGGLE */
+function toggleEdit() {
+  const view = document.getElementById('viewMode');
+  const form = document.getElementById('editForm');
+  const btn  = document.getElementById('editToggle');
+  const isEditing = form.classList.contains('active');
+  if (isEditing) {
+    form.classList.remove('active');
+    view.classList.remove('hidden');
+    btn.textContent = 'Edit Profile';
+  } else {
+    form.classList.add('active');
+    view.classList.add('hidden');
+    btn.textContent = 'Cancel';
+    document.getElementById('e_name').focus();
+  }
+}
+
+/* LOGOUT MODAL */
+function openLogout()  { document.getElementById('logoutModal').classList.add('open'); }
+function closeLogout() { document.getElementById('logoutModal').classList.remove('open'); }
+document.getElementById('logoutModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLogout();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogout(); });
+
+/* Auto-flash success shake on edit */
+(function(){
+  const success = document.querySelector('.msg-success');
+  if (success) {
+    success.style.animation = 'none';
+    setTimeout(() => { success.style.opacity = '0'; success.style.transition = 'opacity .5s'; }, 3500);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login · HotWheels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #FF1A1A;
+  --red-glow: rgba(255,26,26,0.4);
+  --red-dim: rgba(255,26,26,0.12);
+  --white: #ffffff;
+  --off-white: rgba(255,255,255,0.85);
+  --muted: rgba(255,255,255,0.45);
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+body {
+  background: #000;
+  color: var(--white);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#cursor-glow {
+  position: fixed; width: 360px; height: 360px; border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255,26,26,0.28) 0%, rgba(255,26,26,0.10) 35%, transparent 70%);
+  pointer-events: none; z-index: 9998; top: 0; left: 0;
+  will-change: transform; transform: translate(-180px,-180px);
+}
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image: linear-gradient(rgba(255,26,26,0.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,26,26,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.card {
+  position: relative; z-index: 1;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  padding: 48px 40px;
+  width: 100%; max-width: 420px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 60px rgba(255,26,26,0.08);
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+}
+.badge {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 11px; font-weight: 700; letter-spacing: 3px;
+  color: var(--red);
+  text-transform: uppercase;
+  border: 1px solid rgba(255,26,26,0.3);
+  padding: 4px 12px;
+  margin-bottom: 16px;
+}
+h1 {
+  font-family: var(--font-head);
+  font-size: 52px; letter-spacing: 2px;
+  line-height: 1; margin-bottom: 8px;
+}
+.subtitle {
+  color: var(--muted); font-size: 13px; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 36px;
+}
+.messages { margin-bottom: 20px; }
+.messages li {
+  list-style: none; padding: 10px 14px;
+  background: rgba(255,26,26,0.1);
+  border-left: 3px solid var(--red);
+  font-size: 13px; color: var(--off-white);
+  border-radius: 0 2px 2px 0;
+}
+.field { margin-bottom: 20px; }
+label {
+  display: block; font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+input[type="email"], input[type="password"] {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  padding: 12px 16px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 15px; letter-spacing: 0.5px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus {
+  border-color: rgba(255,26,26,0.5);
+  box-shadow: 0 0 0 3px rgba(255,26,26,0.08);
+}
+input::placeholder { color: rgba(255,255,255,0.2); }
+.btn {
+  width: 100%; padding: 14px;
+  background: var(--red);
+  color: #fff; border: none; border-radius: 2px;
+  font-family: var(--font-head);
+  font-size: 20px; letter-spacing: 3px;
+  cursor: pointer; margin-top: 8px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn:hover {
+  background: #cc0000;
+  box-shadow: 0 0 20px rgba(255,26,26,0.4);
+}
+</style>
+</head>
+<body>
+<div id="cursor-glow"></div>
+<div class="bg-grid"></div>
+<div class="card">
+  <div class="badge">⚙ Admin Access</div>
+  <h1>HOT WHEELS</h1>
+  <p class="subtitle">Control Panel Login</p>
+  {% if messages %}
+  <ul class="messages">
+    {% for m in messages %}<li>{{ m }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <form method="POST">
+    {% csrf_token %}
+    <div class="field">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="admin@hotwheels.com" required>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••" required>
+    </div>
+    <button type="submit" class="btn">ENTER</button>
+  </form>
+</div>
+<script>
+  const glow = document.getElementById('cursor-glow');
+  document.addEventListener('mousemove', e => {
+    glow.style.transform = `translate(${e.clientX - 180}px, ${e.clientY - 180}px)`;
+  });
+</script>
+</body>
+</html>

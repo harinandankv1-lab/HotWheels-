@@ -1,0 +1,458 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard · HotWheels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #FF1A1A; --red-glow: rgba(255,26,26,0.4);
+  --red-dim: rgba(255,26,26,0.12);
+  --white: #ffffff; --off-white: rgba(255,255,255,0.85);
+  --muted: rgba(255,255,255,0.45);
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+body { background:#000; color:var(--white); font-family:var(--font-body); min-height:100vh; }
+#cursor-glow {
+  position:fixed; width:360px; height:360px; border-radius:50%;
+  background:radial-gradient(circle at center,rgba(255,26,26,0.18) 0%,rgba(255,26,26,0.06) 35%,transparent 70%);
+  pointer-events:none; z-index:9998; top:0; left:0;
+  will-change:transform; transform:translate(-180px,-180px);
+}
+
+/* NAV */
+nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px; height:64px;
+  background:rgba(0,0,0,0.8); border-bottom:1px solid var(--glass-border);
+  position:sticky; top:0; z-index:100; backdrop-filter:blur(12px);
+}
+.nav-logo { font-family:var(--font-head); font-size:28px; letter-spacing:3px; }
+.nav-logo span { color:var(--red); }
+.nav-badge {
+  font-size:10px; font-weight:700; letter-spacing:2px;
+  color:var(--red); border:1px solid rgba(255,26,26,0.3);
+  padding:3px 10px; text-transform:uppercase;
+}
+.nav-logout {
+  font-family:var(--font-body); font-size:13px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); text-decoration:none;
+  border:1px solid var(--glass-border); padding:7px 16px; border-radius:2px;
+  transition:all 0.2s;
+}
+.nav-logout:hover { color:var(--red); border-color:rgba(255,26,26,0.4); }
+
+/* TABS */
+.tab-bar {
+  display:flex; gap:0;
+  border-bottom:1px solid var(--glass-border);
+  background:rgba(0,0,0,0.5);
+  padding:0 40px;
+  position:sticky; top:64px; z-index:99;
+  backdrop-filter:blur(12px);
+}
+.tab-btn {
+  font-family:var(--font-head); font-size:16px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--muted);
+  background:transparent; border:none; border-bottom:2px solid transparent;
+  padding:14px 28px; cursor:pointer;
+  transition:color 0.2s, border-color 0.2s;
+  position:relative;
+}
+.tab-btn:hover { color:var(--off-white); }
+.tab-btn.active { color:var(--white); border-bottom-color:var(--red); }
+.tab-btn .tab-count {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--red-dim); border:1px solid rgba(255,26,26,0.3);
+  color:var(--red); border-radius:10px;
+  font-family:var(--font-body); font-size:10px; font-weight:700;
+  padding:1px 7px; margin-left:8px; letter-spacing:1px;
+  vertical-align:middle;
+}
+
+/* LAYOUT */
+.container { max-width:1300px; margin:0 auto; padding:40px 24px; }
+.page-title { font-family:var(--font-head); font-size:48px; letter-spacing:2px; margin-bottom:6px; }
+.page-sub { color:var(--muted); font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:36px; }
+
+/* TAB PANELS */
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* MESSAGES */
+.messages { margin-bottom:24px; }
+.messages li {
+  list-style:none; padding:10px 16px;
+  background:rgba(255,26,26,0.08); border-left:3px solid var(--red);
+  font-size:13px; margin-bottom:6px; border-radius:0 2px 2px 0;
+}
+
+/* STATS BAR */
+.stats { display:flex; gap:16px; margin-bottom:40px; flex-wrap:wrap; }
+.stat-card {
+  flex:1; min-width:160px;
+  background:var(--glass-bg); border:1px solid var(--glass-border);
+  border-radius:2px; padding:20px 24px; position:relative; overflow:hidden;
+}
+.stat-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+}
+.stat-num { font-family:var(--font-head); font-size:40px; color:var(--red); line-height:1; }
+.stat-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+/* SECTION */
+.section-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:20px; padding-bottom:12px;
+  border-bottom:1px solid var(--glass-border);
+}
+.section-title { font-family:var(--font-head); font-size:28px; letter-spacing:2px; }
+.btn-add {
+  font-family:var(--font-head); font-size:16px; letter-spacing:2px;
+  background:var(--red); color:#fff; border:none; border-radius:2px;
+  padding:10px 24px; cursor:pointer; text-decoration:none;
+  transition:background 0.2s, box-shadow 0.2s;
+}
+.btn-add:hover { background:#cc0000; box-shadow:0 0 20px rgba(255,26,26,0.35); }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+thead tr {
+  border-bottom:1px solid rgba(255,26,26,0.3);
+  background:rgba(255,26,26,0.05);
+}
+th {
+  text-align:left; padding:12px 16px;
+  font-size:11px; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--muted);
+}
+tbody tr { border-bottom:1px solid var(--glass-border); transition:background 0.15s; }
+tbody tr:hover { background:rgba(255,26,26,0.04); }
+td { padding:14px 16px; font-size:14px; vertical-align:middle; }
+td img {
+  width:52px; height:40px; object-fit:cover;
+  border-radius:2px; border:1px solid var(--glass-border);
+}
+.cat-badge {
+  display:inline-block; padding:3px 10px;
+  background:var(--red-dim); border:1px solid rgba(255,26,26,0.25);
+  border-radius:2px; font-size:11px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--red);
+}
+.qty { font-family:var(--font-head); font-size:18px; }
+.price { font-weight:700; color:var(--off-white); }
+.actions { display:flex; gap:8px; }
+.btn-edit, .btn-del {
+  font-family:var(--font-body); font-size:12px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase;
+  border:none; border-radius:2px; padding:6px 14px; cursor:pointer;
+  text-decoration:none; transition:all 0.2s;
+}
+.btn-edit { background:rgba(255,255,255,0.07); color:var(--off-white); border:1px solid var(--glass-border); }
+.btn-edit:hover { background:rgba(255,255,255,0.12); }
+.btn-del { background:rgba(255,26,26,0.12); color:var(--red); border:1px solid rgba(255,26,26,0.25); }
+.btn-del:hover { background:rgba(255,26,26,0.25); }
+.empty { text-align:center; padding:60px; color:var(--muted); font-size:14px; letter-spacing:1px; }
+
+/* ── REVIEWS SECTION ── */
+.reviews-stats { display:flex; gap:16px; margin-bottom:36px; flex-wrap:wrap; }
+
+/* Rating breakdown bar */
+.rating-breakdown {
+  flex:1; min-width:260px;
+  background:var(--glass-bg); border:1px solid var(--glass-border);
+  border-radius:2px; padding:24px 28px; position:relative; overflow:hidden;
+}
+.rating-breakdown::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+}
+.rating-breakdown-title {
+  font-family:var(--font-head); font-size:13px; letter-spacing:2px;
+  color:var(--muted); text-transform:uppercase; margin-bottom:18px;
+}
+.rb-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.rb-row:last-child { margin-bottom:0; }
+.rb-stars { font-size:12px; color:var(--red); width:60px; flex-shrink:0; letter-spacing:1px; }
+.rb-bar-wrap { flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
+.rb-bar { height:100%; background:var(--red); border-radius:3px; transition:width 1s ease; }
+.rb-count { font-size:12px; color:var(--muted); width:24px; text-align:right; flex-shrink:0; }
+
+/* Average score card */
+.avg-score-card {
+  min-width:160px;
+  background:var(--glass-bg); border:1px solid var(--glass-border);
+  border-radius:2px; padding:24px 28px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; position:relative; overflow:hidden;
+}
+.avg-score-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+}
+.avg-big { font-family:var(--font-head); font-size:64px; color:var(--red); line-height:1; }
+.avg-stars { font-size:20px; color:var(--red); letter-spacing:2px; margin:6px 0 4px; }
+.avg-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+
+/* Review table specific */
+.review-text-cell {
+  max-width:340px; font-size:13px; color:var(--off-white);
+  line-height:1.6; overflow:hidden;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+.star-display { color:var(--red); font-size:15px; letter-spacing:1px; white-space:nowrap; }
+.star-empty-d { color:rgba(255,255,255,0.12); }
+.email-cell { font-size:12px; letter-spacing:1px; color:var(--muted); }
+.date-cell { font-size:11px; letter-spacing:1px; color:rgba(255,255,255,0.25); white-space:nowrap; }
+
+/* Review filter bar */
+.filter-bar {
+  display:flex; gap:8px; align-items:center; margin-bottom:20px; flex-wrap:wrap;
+}
+.filter-btn {
+  font-family:var(--font-body); font-size:11px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; cursor:pointer;
+  background:transparent; border:1px solid var(--glass-border);
+  color:var(--muted); border-radius:2px; padding:6px 14px;
+  transition:all 0.2s;
+}
+.filter-btn:hover, .filter-btn.active { border-color:rgba(255,26,26,0.4); color:var(--red); background:var(--red-dim); }
+.filter-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+</style>
+</head>
+<body>
+<div id="cursor-glow"></div>
+
+<!-- NAV -->
+<nav>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="nav-logo">HOT<span>WHEELS</span></div>
+    <div class="nav-badge">⚙ Admin</div>
+  </div>
+  <a href="{% url 'admin_logout' %}" class="nav-logout">Logout</a>
+</nav>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('products', this)">
+    Products
+    <span class="tab-count">{{ products.count }}</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('reviews', this)">
+    Reviews
+    <span class="tab-count">{{ feedbacks.count }}</span>
+  </button>
+</div>
+
+<div class="container">
+  <div class="page-title">DASHBOARD</div>
+  <div class="page-sub">Manage inventory &amp; customer reviews</div>
+
+  {% if messages %}
+  <ul class="messages">{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <!-- ══════════ PRODUCTS TAB ══════════ -->
+  <div class="tab-panel active" id="panel-products">
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-num">{{ products.count }}</div>
+        <div class="stat-label">Total Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">{{ products|length }}</div>
+        <div class="stat-label">Listed Items</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">PRODUCT LIST</div>
+      <a href="/add-product/" class="btn-add">+ ADD PRODUCT</a>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Image</th><th>Name</th><th>Category</th>
+            <th>Price</th><th>Qty</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td style="color:var(--muted)">{{ forloop.counter }}</td>
+            <td>
+              {% if p.image %}
+                <img src="{{ p.image.url }}" alt="{{ p.name }}">
+              {% else %}
+                <div style="width:52px;height:40px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:2px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;">N/A</div>
+              {% endif %}
+            </td>
+            <td style="font-weight:600">{{ p.name }}</td>
+            <td><span class="cat-badge">{{ p.category }}</span></td>
+            <td class="price">₹{{ p.price }}</td>
+            <td class="qty">{{ p.quantity }}</td>
+            <td>
+              <div class="actions">
+                <a href="{% url 'admin_edit_product' p.id %}" class="btn-edit">Edit</a>
+                <a href="{% url 'admin_delete_product' p.id %}" class="btn-del"
+                   onclick="return confirm('Delete {{ p.name }}?')">Delete</a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="empty">No products yet. Add your first product →</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div><!-- /panel-products -->
+
+
+  <!-- ══════════ REVIEWS TAB ══════════ -->
+  <div class="tab-panel" id="panel-reviews">
+
+    <!-- Summary cards -->
+    <div class="reviews-stats">
+
+      <!-- Average score -->
+      <div class="avg-score-card">
+        <div class="avg-big">{{ avg_rating|default:"—" }}</div>
+        <div class="avg-stars">
+          {% if avg_rating %}
+            {% for i in "12345" %}
+              {% if forloop.counter <= avg_rating %}★{% else %}<span class="star-empty-d">★</span>{% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div class="avg-label">Avg Rating</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-num">{{ feedbacks.count }}</div>
+        <div class="stat-label">Total Reviews</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-num">{{ five_star_count|default:"0" }}</div>
+        <div class="stat-label">5-Star Reviews</div>
+      </div>
+
+      <!-- Rating breakdown -->
+      <div class="rating-breakdown">
+        <div class="rating-breakdown-title">Rating Breakdown</div>
+        {% for row in rating_breakdown %}
+        <div class="rb-row">
+          <div class="rb-stars">{{ row.rating }}★</div>
+          <div class="rb-bar-wrap">
+            <div class="rb-bar" style="width:{{ row.pct }}%"></div>
+          </div>
+          <div class="rb-count">{{ row.count }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Filter buttons -->
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" onclick="filterReviews(0, this)">All</button>
+      <button class="filter-btn" onclick="filterReviews(5, this)">★★★★★</button>
+      <button class="filter-btn" onclick="filterReviews(4, this)">★★★★</button>
+      <button class="filter-btn" onclick="filterReviews(3, this)">★★★</button>
+      <button class="filter-btn" onclick="filterReviews(2, this)">★★</button>
+      <button class="filter-btn" onclick="filterReviews(1, this)">★</button>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">USER REVIEWS</div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="reviewsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Rating</th>
+            <th>Review</th>
+            <th>Email</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fb in feedbacks %}
+          <tr data-rating="{{ fb.rating }}">
+            <td style="color:var(--muted)">{{ forloop.counter }}</td>
+            <td>
+              <div class="star-display">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= fb.rating %}★{% else %}<span class="star-empty-d">★</span>{% endif %}
+                {% endfor %}
+                <br>
+                <span style="font-family:var(--font-head);font-size:13px;color:var(--muted);letter-spacing:1px;">{{ fb.rating }}/5</span>
+              </div>
+            </td>
+            <td><div class="review-text-cell">"{{ fb.feedback_text }}"</div></td>
+            <td class="email-cell">{{ fb.email }}</td>
+            <td class="date-cell">{{ fb.created_at|date:"M d, Y" }}<br>{{ fb.created_at|date:"H:i" }}</td>
+            <td>
+              <a href="{% url 'admin_delete_review' fb.id %}"
+                 class="btn-del"
+                 onclick="return confirm('Delete this review from {{ fb.email }}?')">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="empty">No reviews yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div><!-- /panel-reviews -->
+
+</div><!-- /container -->
+
+<script>
+/* ── CURSOR ── */
+const glow = document.getElementById('cursor-glow');
+document.addEventListener('mousemove', e => {
+  glow.style.transform = `translate(${e.clientX - 180}px, ${e.clientY - 180}px)`;
+});
+
+/* ── TAB SWITCHER ── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ── REVIEW FILTER ── */
+function filterReviews(rating, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const rows = document.querySelectorAll('#reviewsTable tbody tr[data-rating]');
+  rows.forEach(row => {
+    row.style.display = (rating === 0 || parseInt(row.dataset.rating) === rating) ? '' : 'none';
+  });
+}
+
+/* ── OPEN REVIEWS TAB if hash = #reviews ── */
+if (window.location.hash === '#reviews') {
+  const btn = document.querySelectorAll('.tab-btn')[1];
+  switchTab('reviews', btn);
+}
+</script>
+</body>
+</html>
