@@ -352,6 +352,7 @@ def admin_edit_product(request, id):
         return redirect('admin_dashboard')
     return render(request, 'admin_edit_product.html', {'product': product})
 
+
 def admin_delete_product(request, id):
     if not request.session.get('is_admin'):
         return redirect('admin_login')
@@ -377,7 +378,7 @@ def review_view(request):
 
 
 from .models import Feedback
-from django.db.models import Avg, Count
+from django.db.models import Avg
 
 def admin_dashboard(request):
     feedbacks = Feedback.objects.all().order_by('-created_at')
