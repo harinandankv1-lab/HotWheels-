@@ -412,22 +412,21 @@ def delete_review(request, pk):
     review.delete()
     messages.success(request, 'Review deleted successfully.')
     return redirect('admin_dashboard')
-
-# views.py
 from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from groq import Groq
+from dotenv import load_dotenv
+
 import json
 import os
 
+# Load .env file
+load_dotenv()
 
+# Read API key
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from groq import Groq
-import json
 
 @csrf_exempt
 def chatbot(request):
